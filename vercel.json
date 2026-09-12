@@ -1,9 +1,20 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/",
+      "destination": "/termdex/index.html"
+    },
+    {
+      "source": "/index.html",
+      "destination": "/termdex/index.html"
+    },
+    {
+      "source": "/termdex",
+      "destination": "/termdex/index.html"
+    },
+    {
+      "source": "/termdex/",
       "destination": "/termdex/index.html"
     },
     {
@@ -11,16 +22,24 @@
       "destination": "/termdex/public/logo.png"
     },
     {
-      "source": "/dojo/:path*",
-      "destination": "/dojo/:path*"
+      "source": "/assets/(.*)",
+      "destination": "/termdex/assets/$1"
     },
     {
-      "source": "/termdex/:path*",
-      "destination": "/termdex/:path*"
+      "source": "/data/(.*)",
+      "destination": "/termdex/data/$1"
     },
     {
-      "source": "/:path*",
-      "destination": "/termdex/:path*"
+      "source": "/public/(.*)",
+      "destination": "/termdex/public/$1"
+    },
+    {
+      "source": "/dojo/(.*)",
+      "destination": "/dojo/$1"
+    },
+    {
+      "source": "/termdex/(.*)",
+      "destination": "/termdex/$1"
     }
   ]
 }
