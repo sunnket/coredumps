@@ -223,15 +223,29 @@
   <script src="assets/js/landing.js"></script>
   <script src="assets/js/search.js"></script>
   <script src="assets/js/app.js"></script>
-  <script defer src="data/learn.bundle.js"></script>
-  <script defer src="data/depth.bundle.js"></script>
-  <script defer src="data/extras.bundle.js"></script>
+  <!-- Secondary modules streamed in background after initial render -->
   <script>
-    window.addEventListener("load", function () {
-      if (window.TD && window.TD.applyDepth) {
-        window.TD.applyDepth();
+    (function () {
+      function loadScript(src, cb) {
+        var s = document.createElement("script");
+        s.src = src;
+        s.async = true;
+        if (cb) s.onload = cb;
+        document.body.appendChild(s);
       }
-    });
+      function loadRemaining() {
+        loadScript("data/learn.bundle.js");
+        loadScript("data/depth.bundle.js", function () {
+          if (window.TD && window.TD.applyDepth) window.TD.applyDepth();
+        });
+        loadScript("data/extras.bundle.js");
+      }
+      if (window.requestIdleCallback) {
+        requestIdleCallback(loadRemaining);
+      } else {
+        setTimeout(loadRemaining, 300);
+      }
+    })();
   </script>
 </body>
 

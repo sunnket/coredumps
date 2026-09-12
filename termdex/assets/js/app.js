@@ -3580,6 +3580,11 @@
     render();
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-  else boot();
+  if (document.getElementById("view")) {
+    boot();
+  } else if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
 })(window.TD);
