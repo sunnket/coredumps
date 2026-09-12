@@ -196,7 +196,7 @@
   <script src="assets/js/depth.js"></script>
   <script src="assets/js/blueprint.js"></script>
   <script src="assets/js/banks.js"></script>
-  <script src="data/bundle.js"></script>
+  <script src="data/core.bundle.js"></script>
   <script src="assets/js/icons.js"></script>
   <script src="assets/js/diagrams.js"></script>
   <script src="assets/js/machine.js"></script>
@@ -223,6 +223,16 @@
   <script src="assets/js/landing.js"></script>
   <script src="assets/js/search.js"></script>
   <script src="assets/js/app.js"></script>
+  <script defer src="data/learn.bundle.js"></script>
+  <script defer src="data/depth.bundle.js"></script>
+  <script defer src="data/extras.bundle.js"></script>
+  <script>
+    window.addEventListener("load", function () {
+      if (window.TD && window.TD.applyDepth) {
+        window.TD.applyDepth();
+      }
+    });
+  </script>
 </body>
 
 </html>
