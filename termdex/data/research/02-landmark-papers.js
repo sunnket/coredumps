@@ -1,0 +1,300 @@
+/* Research Hub — Landmark Research Papers Directory */
+(function (TD) {
+  TD.landmarkPapers = [
+    /* AI & Machine Learning */
+    {
+      id: "attention-is-all-you-need",
+      title: "Attention Is All You Need",
+      authors: "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin",
+      venue: "NeurIPS",
+      year: 2017,
+      domain: "AI & Machine Learning",
+      citations: "135,000+",
+      tldr: "Introduced the Transformer architecture, replacing recurrent and convolutional neural networks with multi-head self-attention.",
+      breakthrough: "Eliminated sequential $O(N)$ recurrence in NLP, allowing massive parallel GPU training and establishing the universal architectural foundation for GPT-4, Claude, BERT, and all modern LLMs.",
+      paperUrl: "https://arxiv.org/abs/1706.03762",
+      pdfUrl: "https://arxiv.org/pdf/1706.03762.pdf"
+    },
+    {
+      id: "deep-residual-learning-resnet",
+      title: "Deep Residual Learning for Image Recognition (ResNet)",
+      authors: "Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun",
+      venue: "CVPR (Best Paper Award)",
+      year: 2016,
+      domain: "AI & Machine Learning",
+      citations: "210,000+",
+      tldr: "Introduced residual skip connections ($H(x) = F(x) + x$) to solve the vanishing gradient problem in ultra-deep neural networks.",
+      breakthrough: "Enabled training of networks with 152+ layers (8× deeper than VGG) without degradation, winning ImageNet 2015 and becoming standard in modern vision and transformer models.",
+      paperUrl: "https://arxiv.org/abs/1512.03385",
+      pdfUrl: "https://arxiv.org/pdf/1512.03385.pdf"
+    },
+    {
+      id: "bert-pretraining-deep-bidirectional",
+      title: "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+      authors: "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova",
+      venue: "NAACL",
+      year: 2019,
+      domain: "Natural Language Processing",
+      citations: "115,000+",
+      tldr: "Introduced masked language modeling (MLM) and bidirectional context pre-training for Transformers.",
+      breakthrough: "Established the pretrain-then-finetune paradigm in NLP, outperforming 11 separate state-of-the-art benchmarks on GLUE and SQuAD.",
+      paperUrl: "https://arxiv.org/abs/1810.04805",
+      pdfUrl: "https://arxiv.org/pdf/1810.04805.pdf"
+    },
+    {
+      id: "chinchilla-scaling-laws",
+      title: "Training Compute-Optimal Large Language Models (Chinchilla)",
+      authors: "Jordan Hoffmann, Sebastian Borgeaud, Arthur Mensch, Elena Buchatskaya et al. (DeepMind)",
+      venue: "NeurIPS",
+      year: 2022,
+      domain: "AI & Machine Learning",
+      citations: "4,200+",
+      tldr: "Proved that previous LLMs (like GPT-3 and Gopher) were undertrained, finding compute-optimal models require equal parameter and token scaling.",
+      breakthrough: "Proved a 70B parameter model trained on 1.4T tokens easily outperforms a 280B model trained on 300B tokens, pivoting the entire AI industry towards overtraining compact models (LLaMA, Mistral).",
+      paperUrl: "https://arxiv.org/abs/2203.15556",
+      pdfUrl: "https://arxiv.org/pdf/2203.15556.pdf"
+    },
+    {
+      id: "flashattention-fast-io-aware",
+      title: "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+      authors: "Tri Dao, Daniel Y. Fu, Stefano Ermon, Atri Rudra, Christopher Ré",
+      venue: "NeurIPS",
+      year: 2022,
+      domain: "AI & Machine Learning",
+      citations: "3,800+",
+      tldr: "Designed a hardware-aware exact attention algorithm using GPU SRAM tiling and online softmax.",
+      breakthrough: "Eliminated the $O(N^2)$ High-Bandwidth Memory (HBM) IO bottleneck without approximation, speeding up attention by 3–4× and unlocking 100K–1M+ token context windows.",
+      paperUrl: "https://arxiv.org/abs/2205.14135",
+      pdfUrl: "https://arxiv.org/pdf/2205.14135.pdf"
+    },
+    {
+      id: "llama-open-foundation-models",
+      title: "LLaMA: Open and Efficient Foundation Language Models",
+      authors: "Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet et al. (Meta AI)",
+      venue: "ArXiv Preprint",
+      year: 2023,
+      domain: "AI & Machine Learning",
+      citations: "12,000+",
+      tldr: "Released high-quality open-weight foundation models trained exclusively on publicly available datasets.",
+      breakthrough: "Demonstrated that open-source 13B and 65B parameter models could rival proprietary cloud models, sparking the global open-weights open-source AI revolution.",
+      paperUrl: "https://arxiv.org/abs/2302.13971",
+      pdfUrl: "https://arxiv.org/pdf/2302.13971.pdf"
+    },
+    {
+      id: "deepseek-r1-reasoning-rl",
+      title: "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning",
+      authors: "DeepSeek-AI Team",
+      venue: "ArXiv Preprint",
+      year: 2025,
+      domain: "AI & Machine Learning",
+      citations: "1,500+",
+      tldr: "Demonstrated that reasoning capabilities (reflection, verification, chain-of-thought) emerge naturally through large-scale pure Reinforcement Learning without supervised warmstarts.",
+      breakthrough: "Achieved OpenAI-o1 comparable math/coding reasoning scores using Group Relative Policy Optimization (GRPO) on a fraction of frontier compute budgets.",
+      paperUrl: "https://arxiv.org/abs/2501.12948",
+      pdfUrl: "https://arxiv.org/pdf/2501.12948.pdf"
+    },
+    {
+      id: "alphafold-protein-structure",
+      title: "Highly accurate protein structure prediction with AlphaFold",
+      authors: "John Jumper, Richard Evans, Alexander Pritzel, Demis Hassabis et al. (DeepMind)",
+      venue: "Nature",
+      year: 2021,
+      domain: "AI & Machine Learning",
+      citations: "32,000+",
+      tldr: "Solved the 50-year grand biological challenge of predicting 3D atomic protein structures directly from 1D amino acid sequences.",
+      breakthrough: "Achieved sub-angstrom accuracy competitive with X-ray crystallography, leading to the 2024 Nobel Prize in Chemistry.",
+      paperUrl: "https://www.nature.com/articles/s41586-021-03819-2",
+      pdfUrl: "https://www.nature.com/articles/s41586-021-03819-2.pdf"
+    },
+
+    /* Systems, OS & Distributed Computing */
+    {
+      id: "google-file-system-gfs",
+      title: "The Google File System (GFS)",
+      authors: "Sanjay Ghemawat, Howard Gobioff, Shun-Tak Leung",
+      venue: "ACM SOSP",
+      year: 2003,
+      domain: "Systems & Distributed Systems",
+      citations: "18,000+",
+      tldr: "Designed a fault-tolerant distributed file system built on thousands of cheap, unreliable commodity hard drives.",
+      breakthrough: "Departed from POSIX semantics to prioritize huge append-only writes and single-master chunk metadata, directly inspiring Apache Hadoop HDFS and cloud object storage.",
+      paperUrl: "https://research.google/pubs/pub51/",
+      pdfUrl: "https://static.googleusercontent.com/media/research.google.com/en//archive/gfs-sosp2003.pdf"
+    },
+    {
+      id: "mapreduce-simplified-data-processing",
+      title: "MapReduce: Simplified Data Processing on Large Clusters",
+      authors: "Jeffrey Dean, Sanjay Ghemawat",
+      venue: "USENIX OSDI",
+      year: 2004,
+      domain: "Systems & Distributed Systems",
+      citations: "38,000+",
+      tldr: "Introduced a simple functional programming abstraction (Map and Reduce) for automatic parallel computation on massive clusters.",
+      breakthrough: "Abstracted away network partitioning, machine crashes, and data distribution, kickstarting the modern Big Data and Hadoop revolution.",
+      paperUrl: "https://research.google/pubs/pub62/",
+      pdfUrl: "https://static.googleusercontent.com/media/research.google.com/en//archive/mapreduce-osdi04.pdf"
+    },
+    {
+      id: "spanner-google-distributed-db",
+      title: "Spanner: Google's Globally-Distributed Database",
+      authors: "James C. Corbett, Jeffrey Dean, Michael Epstein, Andrew Fikes et al.",
+      venue: "USENIX OSDI (Best Paper Award)",
+      year: 2012,
+      domain: "Databases & Distributed Systems",
+      citations: "6,500+",
+      tldr: "Built the first globally-distributed database providing external linearizable consistency and cross-datacenter ACID transactions using atomic clocks (TrueTime API).",
+      breakthrough: "Proved that global ACID transactions are achievable at planet scale, inspiring CockroachDB, YugabyteDB, and modern Distributed SQL.",
+      paperUrl: "https://research.google/pubs/pub39966/",
+      pdfUrl: "https://static.googleusercontent.com/media/research.google.com/en//archive/spanner-osdi2012.pdf"
+    },
+    {
+      id: "raft-consensus-understandable",
+      title: "In Search of an Understandable Consensus Algorithm (Raft)",
+      authors: "Diego Ongaro, John Ousterhout",
+      venue: "USENIX ATC (Best Paper Award)",
+      year: 2014,
+      domain: "Systems & Distributed Systems",
+      citations: "5,800+",
+      tldr: "Designed a distributed consensus algorithm equivalent to Paxos in fault-tolerance and performance, but designed explicitly for understandability.",
+      breakthrough: "Decomposed consensus into Leader Election, Log Replication, and Safety, now powering `etcd`, Kubernetes, Docker Swarm, and HashiCorp Consul.",
+      paperUrl: "https://raft.github.io/raft.pdf",
+      pdfUrl: "https://raft.github.io/raft.pdf"
+    },
+    {
+      id: "amazon-dynamo-nosql",
+      title: "Dynamo: Amazon's Highly Available Key-value Store",
+      authors: "Giuseppe DeCandia, Deniz Hastorun, Madan Jampani, Gunavardhan Kakulapati et al.",
+      venue: "ACM SOSP",
+      year: 2007,
+      domain: "Databases & Distributed Systems",
+      citations: "9,500+",
+      tldr: "Pioneered an 'always writable' distributed key-value store using consistent hashing rings, vector clocks, and sloppy quorums.",
+      breakthrough: "Demonstrated that e-commerce checkout availability was worth trading strict ACID consistency for eventual consistency, igniting the entire NoSQL movement (Cassandra, Riak, DynamoDB).",
+      paperUrl: "https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf",
+      pdfUrl: "https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf"
+    },
+    {
+      id: "borg-cluster-management-kubernetes",
+      title: "Large-scale cluster management at Google with Borg",
+      authors: "Abhishek Verma, Luis Pedrosa, Madhukar Korupolu, David Oppenheimer, Eric Tune, John Wilkes",
+      venue: "EuroSys",
+      year: 2015,
+      domain: "Systems & Cloud",
+      citations: "4,100+",
+      tldr: "Disclosed the architecture of Google's internal container cluster manager running hundreds of thousands of jobs across thousands of nodes.",
+      breakthrough: "Provided the blueprint and hard-earned lessons that directly led to the design and creation of Kubernetes.",
+      paperUrl: "https://research.google/pubs/pub43438/",
+      pdfUrl: "https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/43438.pdf"
+    },
+
+    /* Cybersecurity & Cryptography */
+    {
+      id: "bitcoin-peer-to-peer-cash",
+      title: "Bitcoin: A Peer-to-Peer Electronic Cash System",
+      authors: "Satoshi Nakamoto",
+      venue: "Cryptography Mailing List",
+      year: 2008,
+      domain: "Cybersecurity & Cryptography",
+      citations: "36,000+",
+      tldr: "Solved the digital double-spending problem without central authorities using Proof-of-Work cryptographic hash chains.",
+      breakthrough: "Created Nakamoto Consensus and the blockchain data structure, birthing the entire cryptocurrency, smart contracts, and decentralized finance industry.",
+      paperUrl: "https://bitcoin.org/bitcoin.pdf",
+      pdfUrl: "https://bitcoin.org/bitcoin.pdf"
+    },
+    {
+      id: "diffie-hellman-new-directions-cryptography",
+      title: "New Directions in Cryptography",
+      authors: "Whitfield Diffie, Martin E. Hellman",
+      venue: "IEEE Transactions on Information Theory",
+      year: 1976,
+      domain: "Cybersecurity & Cryptography",
+      citations: "28,000+",
+      tldr: "Invented asymmetric public-key cryptography and the Diffie-Hellman key exchange algorithm.",
+      breakthrough: "Proved that two parties can negotiate an encrypted session over an insecure, public channel without sharing a prior secret key, underpinning the entire secure web (HTTPS / TLS).",
+      paperUrl: "https://ieeexplore.ieee.org/document/1055638",
+      pdfUrl: "https://ee.stanford.edu/~hellman/publications/pub024.pdf"
+    },
+    {
+      id: "signal-double-ratchet-algorithm",
+      title: "The Double Ratchet Algorithm",
+      authors: "Trevor Perrin, Moxie Marlinspike",
+      venue: "Signal Technical Specification",
+      year: 2016,
+      domain: "Cybersecurity & Cryptography",
+      citations: "1,200+",
+      tldr: "Designed an end-to-end encryption protocol that continuously ratchets cryptographic keys on every single message.",
+      breakthrough: "Guaranteed both Forward Secrecy (past messages protected) and Post-Compromise Security (future messages protected after recovery), protecting billions of users on Signal and WhatsApp.",
+      paperUrl: "https://signal.org/docs/specifications/doubleratchet/",
+      pdfUrl: "https://signal.org/docs/specifications/doubleratchet/doubleratchet.pdf"
+    },
+    {
+      id: "spectre-attacks-speculative-execution",
+      title: "Spectre Attacks: Exploiting Speculative Execution",
+      authors: "Paul Kocher, Jann Horn, Anders Fogh, Daniel Genkin, Daniel Gruss et al.",
+      venue: "IEEE S&P (Oakland)",
+      year: 2019,
+      domain: "Cybersecurity & Hardware",
+      citations: "4,600+",
+      tldr: "Discovered that modern CPU branch predictors and speculative execution leak memory contents across security boundaries via cache timing side-channels.",
+      breakthrough: "Overturned 25 years of computer architecture assumptions by proving CPU hardware performance optimizations could be weaponized to read kernel memory and passwords.",
+      paperUrl: "https://spectreattack.com/spectre.pdf",
+      pdfUrl: "https://spectreattack.com/spectre.pdf"
+    },
+
+    /* Databases, Lakehouses & Storage */
+    {
+      id: "codd-relational-model-1970",
+      title: "A Relational Model of Data for Large Shared Data Banks",
+      authors: "Edgar F. Codd",
+      venue: "Communications of the ACM",
+      year: 1970,
+      domain: "Databases & Data",
+      citations: "15,000+",
+      tldr: "Introduced relational algebra, mathematical tables, primary keys, and foreign keys, replacing rigid hierarchical network databases.",
+      breakthrough: "Decoupled how data is logically queried from how it is physically stored on disk, creating SQL and the multi-hundred-billion-dollar relational database industry.",
+      paperUrl: "https://dl.acm.org/doi/10.1145/362384.362685",
+      pdfUrl: "https://www.seas.upenn.edu/~zives/03f/cis550/codd.pdf"
+    },
+    {
+      id: "lakehouse-open-acid-platforms",
+      title: "Lakehouse: A New Generation of Open Platforms that Unify Data Warehousing and Advanced Analytics",
+      authors: "Michael Armbrust, Ali Ghodsi, Reynold Xin, Matei Zaharia",
+      venue: "CIDR",
+      year: 2021,
+      domain: "Databases & Data",
+      citations: "850+",
+      tldr: "Proposed the Lakehouse architectural paradigm implementing ACID transactions, schema enforcement, and versioning directly on top of cheap object storage.",
+      breakthrough: "Eliminated dual ETL pipelines between raw Data Lakes (S3) and expensive Data Warehouses (Snowflake), establishing Apache Iceberg and Delta Lake as industry standards.",
+      paperUrl: "https://www.cidrdb.org/cidr2021/papers/cidr2021_paper17.pdf",
+      pdfUrl: "https://www.cidrdb.org/cidr2021/papers/cidr2021_paper17.pdf"
+    },
+
+    /* Networking & Protocols */
+    {
+      id: "cerf-kahn-tcp-ip-protocol",
+      title: "A Protocol for Packet Network Intercommunication (TCP/IP)",
+      authors: "Vinton G. Cerf, Robert E. Kahn",
+      venue: "IEEE Transactions on Communications",
+      year: 1974,
+      domain: "Networks & Distributed Systems",
+      citations: "9,500+",
+      tldr: "Designed the Transmission Control Protocol (TCP) and Internet Protocol (IP) for interconnected packet-switched networks.",
+      breakthrough: "Established the universal end-to-end communication standard that forms the technical backbone of the global Internet.",
+      paperUrl: "https://ieeexplore.ieee.org/document/1092938",
+      pdfUrl: "https://www.cs.princeton.edu/courses/archive/fall06/cos561/papers/cerf74.pdf"
+    },
+    {
+      id: "wireguard-secure-network-tunnel",
+      title: "WireGuard: Next Generation Kernel Network Tunnel",
+      authors: "Jason A. Donenfeld",
+      venue: "NDSS",
+      year: 2017,
+      domain: "Networks & Security",
+      citations: "1,100+",
+      tldr: "Designed an extremely fast, simple, and cryptographically modern VPN protocol built in under 4,000 lines of C code.",
+      breakthrough: "Replaced bloated, million-line IPsec and OpenVPN protocols with Noise protocol handshakes, achieving 4× higher throughput and landing directly into the Linux kernel.",
+      paperUrl: "https://www.wireguard.com/papers/wireguard.pdf",
+      pdfUrl: "https://www.wireguard.com/papers/wireguard.pdf"
+    }
+  ];
+})(window.TD = window.TD || {});

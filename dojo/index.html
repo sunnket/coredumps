@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blueprint Dojo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app" id="app">
+
+  <header class="topbar">
+    <button class="btn btn-icon mobile-tabs" id="libToggle" title="Problem library">☰</button>
+    <div class="brand"><b>Blueprint Dojo</b><span id="brandCount">117 problems</span></div>
+
+    <div class="statbar">
+      <div class="stat"><i>Solved</i><b id="sSolved">0</b></div>
+      <div class="stat"><i>Attempted</i><b id="sAttempted">0</b></div>
+      <div class="stat is-hot"><i>Streak</i><b id="sStreak">0d</b></div>
+      <div class="stat"><i>Time logged</i><b id="sTime">0m</b></div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="tools">
+      <button class="btn btn-sm" id="btnNext" title="Jump to the next problem you have not solved">Next unsolved</button>
+      <button class="btn btn-sm" id="btnRandom" title="Random problem (R)">Shuffle</button>
+      <button class="btn btn-icon" id="btnKeys" title="Keyboard shortcuts (?)">⌘</button>
+      <button class="btn btn-icon" id="btnData" title="Save or restore progress">⇄</button>
+      <button class="btn btn-icon" id="btnTheme" title="Switch theme">◐</button>
+      <button class="btn btn-icon mobile-tabs" id="coachToggle" title="Hints and approach">◧</button>
+    </div>
+  </header>
+
+  <div class="workspace">
+
+    <!-- ============ library ============ -->
+    <aside class="library" id="library">
+      <div class="lib-head">
+        <input class="search" id="search" type="search" placeholder="Search title, pattern or company…" autocomplete="off">
+        <div class="filters" id="diffFilters">
+          <button class="chip" data-diff="Easy">Easy</button>
+          <button class="chip" data-diff="Medium">Medium</button>
+          <button class="chip" data-diff="Hard">Hard</button>
+          <button class="chip" data-status="todo">Unsolved</button>
+          <button class="chip" data-status="flagged">Flagged</button>
+        </div>
+        <div class="filters">
+          <select class="chip" id="companyFilter" title="Filter by company"></select>
+          <select class="chip" id="sortBy" title="Sort order">
+            <option value="curriculum">Order: curriculum</option>
+            <option value="freq">Order: most asked</option>
+            <option value="diff">Order: easiest first</option>
+            <option value="title">Order: A–Z</option>
+          </select>
+        </div>
+        <div class="lib-count" id="libCount">117 shown</div>
+      </div>
+      <div class="lib-list" id="libList"></div>
+    </aside>
+
+    <!-- ============ stage ============ -->
+    <main class="stage">
+      <div class="stage-head">
+        <div class="title-row">
+          <h1 id="pTitle">Loading…</h1>
+          <div class="spacer"></div>
+          <button class="btn btn-sm" id="btnFlag" title="Flag for review">☆ Flag</button>
+          <button class="btn btn-sm" id="btnBrief" title="Show or hide the problem statement">Hide brief</button>
+        </div>
+        <div class="meta-row" id="pMeta"></div>
+      </div>
+
+      <section class="brief" id="brief">
+        <p id="pStatement"></p>
+        <div id="pContext"></div>
+        <div class="label">Examples</div>
+        <div class="examples" id="pExamples"></div>
+        <div class="label">Constraints</div>
+        <ul class="constraints" id="pConstraints"></ul>
+      </section>
+
+      <div class="bar">
+        <div class="seg" id="assistSeg" role="group" aria-label="Blueprint level">
+          <button data-assist="full" aria-pressed="true" title="Full faded solution to trace over">Blueprint</button>
+          <button data-assist="outline" aria-pressed="false" title="Indentation and first keyword only">Outline</button>
+          <button data-assist="off" aria-pressed="false" title="Nothing but a blank sheet">Blank</button>
+        </div>
+
+        <div class="readout"><u>Match</u><b id="rAccuracy">—</b></div>
+        <div class="readout"><u>Time</u><b id="rTimer">0:00</b></div>
+        <div class="readout"><u>Wpm</u><b id="rWpm">0</b></div>
+
+        <div class="track" title="Lines completed"><i id="rTrack"></i></div>
+
+        <div class="seg">
+          <button id="fontDown" title="Smaller text">A−</button>
+          <button id="fontUp" title="Larger text">A+</button>
+        </div>
+      </div>
+
+      <div class="sheet" id="sheet">
+        <div class="gutter mono" id="gutter"></div>
+        <div class="code-wrap" id="codeWrap">
+          <pre class="layer" id="layer" aria-hidden="true"></pre>
+          <textarea id="input" spellcheck="false" autocapitalize="off" autocorrect="off"
+                    wrap="off" aria-label="Code editor"></textarea>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btnCheck" title="Compare your code with the reference (Ctrl+Enter)">Compare with reference</button>
+        <button class="btn" id="btnReset" title="Clear the sheet">Reset</button>
+        <button class="btn" id="btnSolved">Mark solved</button>
+        <div class="verdict" id="verdict">Type over the faded blueprint. Tab indents, Ctrl+Space completes the line.</div>
+      </div>
+    </main>
+
+    <!-- ============ coach ============ -->
+    <aside class="coach" id="coach">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="label">Hints</div>
+          <button class="btn btn-sm" id="btnHint">Reveal next</button>
+        </div>
+        <div id="pHints"></div>
+      </div>
+
+      <div class="panel">
+        <div class="label">Approach</div>
+        <div id="approachSlot"></div>
+        <div class="cxr">
+          <div class="cx"><i>Time</i><b id="pTime" class="mono">—</b></div>
+          <div class="cx"><i>Space</i><b id="pSpace" class="mono">—</b></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="label">Reference solution</div>
+          <button class="btn btn-sm" id="btnSolution">Show</button>
+        </div>
+        <div id="solutionSlot"></div>
+      </div>
+
+      <div class="panel">
+        <div class="label">Test cases <span style="text-transform:none;letter-spacing:0;opacity:.75">— asserted against the reference</span></div>
+        <div class="tests" id="pTests"></div>
+      </div>
+
+      <div class="panel">
+        <div class="label">Your notes</div>
+        <textarea class="notes" id="notes" placeholder="What tripped you up? Write it down — this is saved per problem."></textarea>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<dialog id="keysDialog">
+  <div class="dlg-head">
+    <h2>Keyboard</h2>
+    <button class="btn btn-sm" data-close>Close</button>
+  </div>
+  <div class="dlg-body">
+    <div class="keys">
+      <div class="keyrow"><span>Indent four spaces</span><kbd>Tab</kbd></div>
+      <div class="keyrow"><span>Outdent</span><kbd>Shift + Tab</kbd></div>
+      <div class="keyrow"><span>Auto-indent the next line</span><kbd>Enter</kbd></div>
+      <div class="keyrow"><span>Complete the current line from the blueprint</span><kbd>Ctrl + Space</kbd></div>
+      <div class="keyrow"><span>Compare with reference</span><kbd>Ctrl + Enter</kbd></div>
+      <div class="keyrow"><span>Cycle blueprint level</span><kbd>Alt + B</kbd></div>
+      <div class="keyrow"><span>Peek at the blueprint while held</span><kbd>Alt + P</kbd></div>
+      <div class="keyrow"><span>Next / previous problem</span><kbd>Alt + ↓ / ↑</kbd></div>
+      <div class="keyrow"><span>Random problem</span><kbd>Alt + R</kbd></div>
+      <div class="keyrow"><span>Focus search</span><kbd>Ctrl + K</kbd></div>
+      <div class="keyrow"><span>This panel</span><kbd>?</kbd></div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dataDialog">
+  <div class="dlg-head">
+    <h2>Progress</h2>
+    <button class="btn btn-sm" data-close>Close</button>
+  </div>
+  <div class="dlg-body">
+    <p class="prose" style="margin-top:0">Your progress lives in this browser only. Copy the text below to keep a backup, or paste a backup in and load it.</p>
+    <textarea class="io-box mono" id="ioBox" spellcheck="false"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn" id="btnCopy">Copy to clipboard</button>
+      <button class="btn" id="btnLoad">Load from text</button>
+      <button class="btn" id="btnWipe" style="margin-left:auto">Erase all progress</button>
+    </div>
+    <div class="prose" id="ioMsg" style="margin-top:10px"></div>
+  </div>
+</dialog>
+
+<script src="problems.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

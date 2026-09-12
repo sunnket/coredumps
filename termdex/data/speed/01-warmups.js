@@ -1,0 +1,221 @@
+/* Speed Coding — rungs 1 and 2: fragments and single lines.
+
+   These sets need no lesson history, which is what makes the section usable on
+   day one. Every line is Python (or shell) a working engineer actually types;
+   nothing is invented to be typeable, because a line you will never write
+   again teaches the fingers nothing worth having.
+
+   `why` is the teaching beat. It is shown only *after* the card is cleared —
+   the moment the reader has just produced the line themselves and is paying
+   the most attention to what it means. Keep it to one or two sentences, and
+   make it something a reader would not already know from the line itself. */
+
+TD.addSpeedSets([
+
+  /* ================= RUNG 1 — fragments ================= */
+  {
+    id: "keys",
+    rung: 1,
+    name: "Keywords and openers",
+    lvl: "core",
+    time: "3 min",
+    why: "The shortest fragments in the language, and the ones you type most. These should cost you no thought at all — that is the whole point of starting here.",
+    cards: [
+      { c: "if ", w: "the opener of every branch",
+        why: "The space is part of it. `if(x)` is legal Python but reads as C, and every style guide and reviewer will ask you to drop the brackets." },
+      { c: "else:", w: "the other side of a branch",
+        why: "`else` never takes a condition — that is what `elif` is for. The colon is the part people forget when moving from a language that uses braces." },
+      { c: "elif ", w: "a second condition",
+        why: "Python's contraction of *else if*. It exists so a chain of conditions stays at one indentation level instead of nesting deeper with every branch." },
+      { c: "for ", w: "the opener of every loop over items",
+        why: "Python's `for` always walks a collection — there is no C-style `for(i=0; i<n; i++)`. If you want numbers, you loop over `range()`, which is itself a collection." },
+      { c: "while ", w: "the opener of a condition-driven loop",
+        why: "Reach for `while` only when you genuinely do not know the number of passes. If you do know it, `for` is safer: it cannot run forever." },
+      { c: "def ", w: "the start of a function",
+        why: "Short for *define*. The name binds at the moment the `def` line runs, which is why a function must be defined above the code that calls it at import time." },
+      { c: "return ", w: "hand a value back",
+        why: "A function with no `return` gives back `None`. That is the source of the classic *why is my variable None* bug — a function that printed instead of returning." },
+      { c: "import ", w: "pull in a module",
+        why: "Imports run the entire module the first time, then cache it. That is why a slow import is slow exactly once, and why code at the top level of a module is a side effect." },
+      { c: "class ", w: "the start of a class",
+        why: "The body of a `class` runs immediately at definition time, unlike a function body. Anything you write directly inside it becomes shared by every instance." },
+      { c: "try:", w: "open a block that may fail",
+        why: "Keep the `try` block as small as you can. Wrapping twenty lines means an exception from any of them lands in the same handler, and you lose track of what actually failed." },
+      { c: "except ", w: "catch a specific failure",
+        why: "Always name the exception. A bare `except:` swallows `KeyboardInterrupt` too, so it catches you pressing Ctrl-C and refuses to let the program stop." },
+      { c: "with ", w: "open a managed resource",
+        why: "`with` guarantees clean-up even if the block raises. It is the reason you almost never call `.close()` by hand in modern Python." },
+      { c: "yield ", w: "hand back one value and pause",
+        why: "One `yield` anywhere turns the whole function into a generator: calling it now returns an iterator and runs none of the body until you ask for a value." },
+      { c: "lambda ", w: "a one-expression anonymous function",
+        why: "A lambda holds exactly one expression — no statements, no assignments. If you want more than that, you want a real `def` with a name." },
+      { c: "assert ", w: "state something that must be true",
+        why: "Assertions are stripped when Python runs with `-O`, so they are a development check, never a validation of untrusted input." },
+      { c: "async def ", w: "the start of a coroutine",
+        why: "Calling this does not run it — it returns a coroutine object that does nothing until awaited. Forgetting the `await` is the most common async bug there is." }
+    ]
+  },
+
+  {
+    id: "punct",
+    rung: 1,
+    name: "The awkward punctuation",
+    lvl: "core",
+    time: "4 min",
+    why: "Brackets, quotes, colons and underscores are where typing speed actually goes to die — they are the keys your fingers have not automated. Drill the shapes, not the meaning.",
+    cards: [
+      { c: "()", w: "empty call",
+        why: "The brackets are what *calls* a function. `f` is the function itself; `f()` is the result of running it — a distinction that matters every time you pass a callback." },
+      { c: "[]", w: "empty list",
+        why: "Never use an empty list as a default argument (`def f(x=[])`). It is created once at definition time and shared by every call, so it silently accumulates." },
+      { c: "{}", w: "empty dict",
+        why: "Curly brackets with nothing inside is a *dict*, not a set. An empty set has no literal at all — you have to write `set()`." },
+      { c: "\"\"", w: "empty string, double quotes",
+        why: "An empty string is falsy, so `if not name:` catches both `\"\"` and `None`. That is usually what you want, and occasionally exactly what you do not." },
+      { c: "self.", w: "the prefix on every instance attribute",
+        why: "`self` is explicit in Python because the alternative — a hidden `this` — makes it ambiguous whether a name is local or on the object. Here there is never any doubt." },
+      { c: "__init__", w: "the constructor name — four underscores in total",
+        why: "It is not really a constructor: the object already exists by the time `__init__` runs. Its job is to set the object up, not to create it." },
+      { c: "**kwargs", w: "keyword argument catch-all",
+        why: "The two stars unpack a dict into named arguments. The name `kwargs` is pure convention — `**options` works identically and often reads better." },
+      { c: "*args", w: "positional argument catch-all",
+        why: "One star for positional, two for keyword. The same syntax works in reverse at a call site: `f(*my_list)` spreads a list into separate arguments." },
+      { c: "->", w: "the return-type arrow",
+        why: "Type hints are never enforced at runtime — Python ignores them entirely. They exist for your editor, your type checker and the next reader." },
+      { c: ":=", w: "the walrus operator",
+        why: "It assigns *and* evaluates, which is what lets you write `while chunk := f.read(n)`. Named the walrus because sideways it looks like eyes and tusks." },
+      { c: "!=", w: "not equal",
+        why: "`!=` compares values; `is not` compares identity. Two equal lists are `==` but never `is`, because they are separate objects in memory." },
+      { c: "==", w: "equality test, not assignment",
+        why: "In Python this is a genuine mistake rather than a subtle bug: `if x = 1` is a syntax error, so the interpreter catches it for you." },
+      { c: "f\"{}\"", w: "an empty f-string with a slot in it",
+        why: "The `f` prefix is what activates the braces. Forget it and you print the literal text `{name}` — a bug that survives review because the line looks right." },
+      { c: "[::-1]", w: "reverse a sequence",
+        why: "A slice with a step of -1. It works on strings, lists and tuples alike, and it is the shortest correct way to reverse any of them." },
+      { c: "# noqa", w: "silence a linter on this line",
+        why: "Use it rarely and always with the specific rule (`# noqa: E501`). A bare `noqa` hides every future warning on that line too." },
+      { c: "\"\"\"", w: "the opener of a docstring",
+        why: "A string as the first statement of a module, class or function becomes its docstring, readable at runtime through `__doc__` and by `help()`." }
+    ]
+  },
+
+  {
+    id: "ops",
+    rung: 1,
+    name: "Operators worth automating",
+    lvl: "core",
+    time: "4 min",
+    why: "The symbols that carry the most meaning per keystroke. Half of these are the difference between a line that reads as Python and one that reads as translated Java.",
+    cards: [
+      { c: "+=", w: "add and reassign",
+        why: "On a list `+=` mutates in place, but `x = x + [1]` builds a new one. If anything else holds a reference to that list, the two behave completely differently." },
+      { c: "//", w: "floor division",
+        why: "One slash always gives a float in Python 3, even `4 / 2`. Use `//` whenever you want an integer — an index, a midpoint, a page count." },
+      { c: "%", w: "remainder",
+        why: "The every-Nth-time operator. `if i % 100 == 0:` inside a training loop is how you log periodically without drowning in output." },
+      { c: "**", w: "power",
+        why: "`2 ** 10` is 1024. It also does roots: `x ** 0.5` is the square root, and it is faster to type than importing `math`." },
+      { c: " in ", w: "membership test",
+        why: "On a list this scans every element; on a set or dict it is a single hash lookup. Same syntax, wildly different cost — this is the most common accidental slowdown in Python." },
+      { c: " not in ", w: "the negative membership test",
+        why: "Prefer `if x not in items` over `if not x in items`. Both work, but the first reads as English and is what everyone else writes." },
+      { c: " is None", w: "identity check against nothing",
+        why: "Always `is None`, never `== None`. A class can override `==` to return anything it likes, but identity cannot be faked." },
+      { c: " and ", w: "both must be true",
+        why: "It short-circuits: if the left side is falsy the right side never runs. That is what makes `if user and user.name` safe when `user` is None." },
+      { c: " or ", w: "either one",
+        why: "`or` returns the first truthy *value*, not True. So `name or \"anon\"` is a working default — but it also replaces `0` and `\"\"`, which may not be what you meant." },
+      { c: " if  else ", w: "the ternary, in Python's word order",
+        why: "Value first, then the condition: `x if cond else y`. Every other language puts the condition first, which is why this one takes practice." },
+      { c: "@", w: "the decorator marker",
+        why: "`@thing` above a function is exactly `f = thing(f)` after it. Once you see that, decorators stop being magic and become a function that takes a function." },
+      { c: "->", w: "the return arrow again, in context",
+        why: "Worth drilling twice: it appears on every typed signature you will write, and the arrow is two keys most people hunt for." }
+    ]
+  },
+
+  /* ================= RUNG 2 — whole lines ================= */
+  {
+    id: "lines",
+    rung: 2,
+    name: "Whole lines you type every day",
+    lvl: "core",
+    time: "6 min",
+    why: "One complete statement at a time. These are real lines from real files — the ones that appear in almost every Python project you will ever open.",
+    cards: [
+      { c: "if __name__ == \"__main__\":", w: "the script entry-point guard",
+        why: "`__name__` is `\"__main__\"` only when the file is run directly, not when imported. Without this guard, importing your script would execute it." },
+      { c: "for i, item in enumerate(items):", w: "loop with both index and value",
+        why: "`enumerate` takes a `start=` too, so `enumerate(lines, start=1)` gives human line numbers and saves you writing `i + 1` in every message." },
+      { c: "with open(path) as f:", w: "open a file that closes itself",
+        why: "The file closes even if the block raises. Without `with`, an exception leaves the handle open until garbage collection — which on Windows locks the file." },
+      { c: "data = json.load(f)", w: "read JSON from an open file",
+        why: "`load` takes a file, `loads` takes a string — the `s` is for string. Mixing them up is the most common `json` error there is." },
+      { c: "print(f\"{name}: {value}\")", w: "an f-string with two slots",
+        why: "Add `=` inside the braces and you get the expression too: `f\"{value=}\"` prints `value=42`. It is the fastest debug print in the language." },
+      { c: "raise ValueError(\"bad input\")", w: "fail loudly with a reason",
+        why: "Pick the specific exception type. `ValueError` means the value was wrong, `TypeError` means the type was — and a caller can only handle what you name." },
+      { c: "return [x for x in items if x]", w: "return the truthy items",
+        why: "This drops `0`, `\"\"` and `None` alike. If you only meant to drop `None`, say `if x is not None` — otherwise you silently lose legitimate zeroes." },
+      { c: "logger = logging.getLogger(__name__)", w: "the standard module logger line",
+        why: "Using `__name__` names the logger after the module, so log output tells you where it came from and you can raise or lower one module's level alone." },
+      { c: "def __init__(self, name: str):", w: "a typed constructor signature",
+        why: "The hint costs nothing at runtime and makes your editor autocomplete every use of `name` downstream. That payoff is why typed signatures spread so fast." },
+      { c: "counts = Counter(words)", w: "tally an iterable in one call",
+        why: "A missing key returns 0 rather than raising, and `.most_common(n)` gives you the top n already sorted — a grouping loop and a sort, replaced by one line." },
+      { c: "result = sorted(rows, key=lambda r: r[\"score\"])", w: "sort dicts by one field",
+        why: "Add `reverse=True` for descending. Python's sort is stable, so equal scores keep their original order — which is why you can sort twice to sort by two fields." },
+      { c: "os.makedirs(out_dir, exist_ok=True)", w: "create a directory idempotently",
+        why: "`exist_ok=True` is what makes it safe to call twice. Without it, the second run of your script crashes on a directory it created itself." },
+      { c: "df = pd.read_csv(path)", w: "load a dataframe",
+        why: "Pass `dtype=` when you know the types. Otherwise pandas guesses per column, and an ID column of digits silently becomes an integer that drops leading zeroes." },
+      { c: "items = sorted(set(items))", w: "unique, then ordered",
+        why: "A set has no order at all, so sorting after de-duplicating is the only way to get a stable, repeatable list out of it." },
+      { c: "text = path.read_text(encoding=\"utf-8\")", w: "read a whole file with pathlib",
+        why: "Always name the encoding. The default depends on the operating system, which is why a script that works on your Mac mangles accents on a Windows box." },
+      { c: "return {k: v for k, v in data.items() if v}", w: "drop the empty values from a dict",
+        why: "`.items()` gives key and value together. Iterating a dict directly gives only keys — a surprise for anyone arriving from JavaScript." }
+    ]
+  },
+
+  {
+    id: "shell",
+    rung: 2,
+    name: "Terminal muscle memory",
+    lvl: "core",
+    time: "5 min",
+    why: "Commands you will type thousands of times. Fumbling git in front of an interviewer reads as inexperience even when it is only clumsiness.",
+    lang: "bash",
+    cards: [
+      { c: "git status", w: "what has changed",
+        why: "The single most useful command in git. Run it before and after everything — it also tells you what to do next, which no other command does." },
+      { c: "git add -p", w: "stage changes hunk by hunk",
+        why: "Reviews your own diff as you stage it. It is the cheapest way to catch a stray debug print before it becomes a commit." },
+      { c: "git commit -m \"\"", w: "commit with an inline message",
+        why: "Write the message as what the change *does*, in the present tense: `fix off-by-one in pagination`, not `fixed stuff`. Your future self is the reader." },
+      { c: "git checkout -b feature/", w: "create and switch to a branch",
+        why: "`-b` creates and switches in one step. The slash is only a naming convention, but tools display slashed names as folders, so it keeps a long branch list readable." },
+      { c: "git log --oneline -10", w: "the last ten commits, one line each",
+        why: "Add `--graph` and branch structure appears as ASCII art. It is the fastest way to understand a repository you have just been handed." },
+      { c: "git diff --staged", w: "review exactly what is about to be committed",
+        why: "Plain `git diff` shows *unstaged* work, which is the opposite of what you want just before committing. This is the one that matches the commit." },
+      { c: "git restore --staged ", w: "unstage without losing the work",
+        why: "The modern, readable replacement for `git reset HEAD <file>`. Your edits stay exactly as they were; only the staging is undone." },
+      { c: "python -m venv .venv", w: "create a virtual environment",
+        why: "`python -m` runs a module as a script, guaranteeing you get the venv belonging to *that* interpreter rather than whichever one is first on PATH." },
+      { c: "pip install -r requirements.txt", w: "install a project's dependencies",
+        why: "`-r` means read from a file. Pin versions in that file — an unpinned dependency means your build changes on a day you did not touch it." },
+      { c: "docker compose up -d", w: "start the stack in the background",
+        why: "`-d` detaches. Without it the logs take over your terminal and Ctrl-C stops the containers, which surprises people once and only once." },
+      { c: "grep -rn \"pattern\" .", w: "search recursively with line numbers",
+        why: "`-r` recursive, `-n` line numbers. Add `-i` to ignore case. This is the fastest way into an unfamiliar codebase when you know a string but not a file." },
+      { c: "chmod +x script.sh", w: "make a script executable",
+        why: "Without the executable bit the shell refuses to run it, giving *permission denied* — an error that sounds far more serious than the one-command fix it needs." },
+      { c: "tail -f app.log", w: "watch a log as it is written",
+        why: "`-f` follows the file. It is how you watch a deploy or a training run happen live rather than opening the file again and again." },
+      { c: "curl -s http://localhost:8000/health", w: "hit an endpoint quietly",
+        why: "`-s` silences the progress meter, which matters when piping into `jq`. A `/health` route that returns 200 is the first thing to add to any service." }
+    ]
+  }
+
+]);

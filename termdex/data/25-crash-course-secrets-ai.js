@@ -1,0 +1,121 @@
+/* Crash Course, part 7 — credentials, the everyday security habits, and the
+   practical AI-tooling vocabulary.
+
+   Same house rule: plain English, real examples, nothing hand-waved. Same
+   scope rule: only what no other category owns. The cryptography lives in
+   security and the model theory lives in genai-llm — this is the layer an
+   engineer touches on a normal Tuesday. */
+
+TD.add("crash-course", [
+
+{t:"Secret", d:"Any value that grants access — a key, password, token or certificate — and must never be committed.", l:"core", g:["tools","security","crash-course"],
+ b:["Secrets differ from configuration in one way that matters: leaking configuration is embarrassing, leaking a secret is an incident. The practical rule is that secrets live in environment variables or a secrets manager, are injected at runtime, and never appear in the repository, in logs, in error messages or in a screenshot.",
+    "The detail people miss is that **git never forgets**. Committing a key and then deleting it in the next commit leaves it in the history, readable by anyone who clones. Public repositories are scanned by bots within minutes. The only correct response to a leaked secret is to rotate it — invalidate the old value — and removing the commit is at best a tidy-up afterwards."],
+ k:["Environment variables or a secrets manager; never in the repository.",
+    "Deleting a committed secret does not remove it from git history.",
+    "A leaked secret must be rotated. Nothing else counts as fixing it.",
+    "Keep them out of logs and error messages too — those are widely readable."],
+ x:{lang:"python", code:"import os\n\nkey = os.environ[\"STRIPE_SECRET\"]     # KeyError if absent: fail loudly\n\n# .env locally (and .env is in .gitignore)\n# real secrets manager in production\n\n# never:\n#   log.info(f\"calling with {key}\")   <- now it is in your logs forever"},
+ r:["API Key","Environment Variable","Secrets Management",".gitignore"]},
+
+{t:"Access Token", d:"A short-lived string proving you are already authenticated, sent with each request instead of a password.", l:"core", g:["web","security","crash-course"],
+ b:["You log in once with a password, and the server returns a token. Every later request carries that token in an `Authorization: Bearer ...` header. The password is used once and never travels again, and the token can be given a short life and narrow permissions.",
+    "The pairing worth understanding is access token plus refresh token. The access token expires in minutes, so a stolen one is briefly useful; the refresh token lives longer, is stored more carefully, and exists only to obtain new access tokens. A JWT is a common format that carries its claims inside itself — meaning **anyone holding it can read its contents**, so it is signed against tampering, not encrypted against reading. Never put anything private inside one."],
+ k:["Sent as `Authorization: Bearer <token>`; replaces sending the password.",
+    "Short-lived access token plus a longer-lived refresh token.",
+    "A JWT is signed, not encrypted — its payload is readable by anyone.",
+    "Expiry is the security feature. A token that never expires is a password."],
+ x:{lang:"text", code:"POST /login          -> { access: \"eyJ...\", refresh: \"a91...\" }\n\nGET /me\nAuthorization: Bearer eyJ...\n\naccess   ~15 minutes   sent on every request\nrefresh  ~30 days      used only to get a new access token\n\nJWT payload is base64, not encrypted -- decode it and read it."},
+ r:["API Key","Cookie and Session","Secret","Two-Factor Authentication"]},
+
+{t:"Two-Factor Authentication", d:"Requiring a second, different kind of proof beyond the password.", l:"core", g:["security","crash-course"],
+ b:["The factors are something you know (a password), something you have (a phone or hardware key) and something you are (a fingerprint). Two factors means two *different* categories — a password plus a security question is still one factor, because both are things you know.",
+    "The methods are not equal. SMS codes are the weakest, because a SIM swap defeats them, though they still beat nothing. An authenticator app generating six-digit codes is substantially better. A hardware key using WebAuthn is the strongest, because it verifies the site's domain and therefore cannot be phished — a fake login page gets nothing, since the key refuses to respond to the wrong origin."],
+ k:["Two different categories: know, have, are. Two passwords is still one factor.",
+    "SMS < authenticator app < hardware key, in that order of strength.",
+    "A hardware key is phishing-proof because it checks the domain itself.",
+    "Save the recovery codes somewhere that is not the device being protected."],
+ x:{lang:"text", code:"know   password, PIN\nhave   phone (TOTP app), hardware key, backup codes\nare    fingerprint, face\n\nSMS          defeated by a SIM swap\nTOTP app     6 digits, rotating every 30s -- phishable, but far better\nWebAuthn     verifies the origin -> a fake page gets nothing"},
+ r:["Access Token","Secret","Password Hashing","Least Privilege"]},
+
+{t:"SSH Key", d:"A key pair that logs you into a remote machine or git host without a password.", l:"core", g:["tools","security","crash-course"],
+ b:["You generate two files. The **private** key stays on your machine and is never shared, ever. The **public** key is copied to the server or pasted into GitHub. The server then challenges you in a way only the matching private key can answer, so nothing secret crosses the network.",
+    "The everyday failures are predictable. `Permissions 0644 for id_rsa are too open` means the private key is readable by others and SSH refuses to use it — `chmod 600` fixes it. Use ed25519 rather than RSA for new keys. Set a passphrase, and let the agent hold it so you type it once per session rather than per push."],
+ k:["Private key never leaves your machine; the public key is what you upload.",
+    "`chmod 600` the private key or SSH will refuse it.",
+    "Prefer `ed25519` — shorter, faster and stronger than RSA.",
+    "Use a passphrase plus `ssh-agent`, so you enter it once per session."],
+ x:{lang:"bash", code:"ssh-keygen -t ed25519 -C \"you@example.com\"\n#   ~/.ssh/id_ed25519       PRIVATE -- never share, never commit\n#   ~/.ssh/id_ed25519.pub   public  -- paste this into GitHub\n\nchmod 600 ~/.ssh/id_ed25519\nssh-add ~/.ssh/id_ed25519      # unlock once per session\nssh -T git@github.com          # test it"},
+ r:["Secret","Permissions","Certificate","Repository"]},
+
+{t:"Certificate", d:"A file proving that a domain is who it claims to be, signed by an authority the browser already trusts.", l:"core", g:["web","security","crash-course"],
+ b:["When you connect over https, the server presents a certificate. It contains the domain, a public key, an expiry date and a signature from a certificate authority. Your browser trusts a set of authorities out of the box, so a signature from one of them means *somebody verified this domain* — which is what the padlock represents.",
+    "The everyday problems are all mundane. **Expired** is the most common outage of this kind and entirely avoidable with automated renewal. *Self-signed* means nobody vouched for it, so browsers warn. And a certificate is issued for specific names — `example.com` does not automatically cover `www.example.com`, which is why a wildcard or a multi-name certificate exists."],
+ k:["Proves domain ownership; signed by an authority the client already trusts.",
+    "Expiry causes real outages — automate renewal and alert well before the date.",
+    "Self-signed means unverified, which is fine internally and not in public.",
+    "It covers named domains only; subdomains need a wildcard or explicit entry."],
+ x:{lang:"bash", code:"# what is actually being served, and when does it expire?\nopenssl s_client -connect example.com:443 </dev/null 2>/dev/null \\\n  | openssl x509 -noout -subject -dates\n\n# notAfter=Dec  2 12:00:00 2026 GMT\n#\n# Let's Encrypt certs last 90 days -- renewal MUST be automated."},
+ r:["SSL Certificate","Hashing vs Encryption","SSH Key","Redirect"]},
+
+{t:"Password Hashing", d:"Storing an irreversible fingerprint of a password rather than the password itself.", l:"core", g:["security","crash-course"],
+ b:["A password database should not contain passwords. It stores the output of a one-way function, and logging in re-computes that output and compares. A breach then leaks fingerprints rather than credentials — provided the right function was used.",
+    "The right function is deliberately slow: bcrypt, scrypt or Argon2. Fast hashes such as MD5 or SHA-256 are wrong here precisely because they are fast, letting an attacker try billions of guesses per second. A **salt** — random data unique per user, stored alongside — ensures two people with the same password get different hashes, which defeats precomputed rainbow tables. Never write this yourself; the library does salting and comparison correctly."],
+ k:["Store a one-way hash, never the password.",
+    "Use a deliberately slow function: bcrypt, scrypt or Argon2 — never SHA-256.",
+    "A per-user salt makes identical passwords hash differently.",
+    "Use the library. Hand-rolled comparison leaks timing information."],
+ x:{lang:"python", code:"import bcrypt\n\n# signup -- bcrypt generates and embeds the salt for you\nhashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())\n\n# login -- constant-time comparison\nbcrypt.checkpw(attempt.encode(), hashed)\n\n# hashed:  $2b$12$Xy...  ->  algorithm, cost factor, salt, hash"},
+ r:["Hashing vs Encryption","Secret","Two-Factor Authentication","Salt"]},
+
+{t:"Sanitisation", d:"Cleaning untrusted input before it reaches somewhere it could be interpreted as instructions.", l:"core", g:["security","crash-course"],
+ b:["Anything a user supplies is untrusted, including form fields, uploaded filenames, headers and URL parameters. Sanitisation removes or neutralises whatever could be dangerous in the destination — HTML tags before rendering, path segments before opening a file, control characters before writing a log.",
+    "The distinction from escaping is worth being precise about. **Escaping** keeps the data intact and tells the destination to treat it as literal, and is the right default. **Sanitisation** actually removes content, and is for cases where you cannot escape — accepting a subset of HTML, for instance. Validating against an allowlist of what is permitted beats blocking a list of what is not, because the blocklist is always incomplete."],
+ k:["All user input is untrusted: fields, filenames, headers, parameters.",
+    "Escaping preserves the data; sanitisation removes part of it.",
+    "Allowlist what is permitted rather than blocklisting what is not.",
+    "Validate on the server. Client-side validation is convenience, not security."],
+ x:{lang:"python", code:"import os, bleach\n\n# path traversal: '../../etc/passwd' must never open that file\nsafe = os.path.basename(filename)\n\n# rich text that must allow SOME html\nclean = bleach.clean(user_html, tags=[\"b\", \"i\", \"a\"], attributes={\"a\": [\"href\"]})\n\n# everywhere else, prefer escaping to stripping"},
+ r:["Escaping","Escape Character","Least Privilege","Edge Case"]},
+
+{t:"Context Length", d:"The maximum amount of text a language model can consider at once — prompt and reply together.", l:"core", g:["ai","basics","crash-course"],
+ b:["Measured in tokens, and it is a hard ceiling covering the system message, the conversation history, any retrieved documents and the response. Exceeding it is an error, not a graceful degradation, so the practical work is deciding what to leave out.",
+    "Two behaviours matter beyond the limit itself. **Cost and latency grow with what you send**, so a long context is expensive on every call. And models attend unevenly across a long context — material in the middle is recalled less reliably than material at the start or end, an effect known as *lost in the middle*. Putting the instruction and the most important material at the edges is a real technique, not superstition."],
+ k:["A hard ceiling in tokens covering prompt, history and reply together.",
+    "You pay for the whole context on every single call.",
+    "Recall is weakest in the middle — put key material at the start or end.",
+    "Long conversations need trimming or summarising, not just a bigger window."],
+ x:{lang:"text", code:"budget: 128,000 tokens\n\n  system prompt          400\n  retrieved documents  8,000\n  conversation        40,000     <- grows every turn\n  reply (reserve)      4,000\n                      ------\n                      52,400 used\n\nRESERVE space for the reply, or generation is cut off mid-sentence."},
+ r:["Context Window","Max Tokens","Cost Per Token","Chunk Overlap"]},
+
+{t:"Token Limit and Truncation", d:"What happens when a request or a reply runs out of room, and why output stops mid-sentence.", l:"core", g:["ai","basics","crash-course"],
+ b:["Two different limits are in play and they are regularly confused. The **context length** is the total the model can hold. `max_tokens` is a separate cap on the *reply* alone. If the reply hits `max_tokens` it simply stops — mid-word if necessary — and the response carries a finish reason saying `length` rather than `stop`.",
+    "This is the cause of the most common bug in LLM applications: JSON output that stops halfway and fails to parse, intermittently, only on longer inputs. **Always check the finish reason** rather than assuming a reply is complete. Truncated output is not an error from the API's point of view; it did exactly what it was told."],
+ k:["Context length caps the total; `max_tokens` caps only the reply.",
+    "Hitting `max_tokens` truncates mid-sentence with no error.",
+    "`finish_reason: \"length\"` means truncated; `\"stop\"` means it finished.",
+    "Half-parsed JSON on long inputs is nearly always this."],
+ x:{lang:"python", code:"resp = client.messages.create(model=..., max_tokens=1024, messages=msgs)\n\nif resp.stop_reason == \"max_tokens\":\n    # the reply is INCOMPLETE -- do not parse it as if it were whole\n    raise TruncatedError(\"raise max_tokens or shorten the request\")\n\ndata = json.loads(resp.content[0].text)"},
+ r:["Max Tokens","Context Length","Stop Sequence","Streaming Response"]},
+
+{t:"Automation", d:"Turning a task you do repeatedly into something a machine does reliably.", l:"core", g:["process","tools","crash-course"],
+ b:["The candidates are the tasks that are repetitive, mechanical and error-prone when done by hand: running tests, formatting, deploying, generating a report. The gain is not only time — it is that the machine performs the task identically every time, and a documented script is a runbook that cannot drift from reality.",
+    "The judgement is knowing when not to. Automating something done twice a year, or something whose rules keep changing, usually costs more than it saves — and a fragile automation that fails silently is worse than a manual step, because nobody notices. Automate what is stable and frequent, make failures loud, and keep a manual path for the rare case."],
+ k:["Automate what is frequent, stable and mechanical.",
+    "The main gain is consistency; saved time is second.",
+    "Not worth it for rare or fast-changing tasks — the maintenance outweighs it.",
+    "A silent failure is worse than a manual step. Make automation fail loudly."],
+ x:{lang:"text", code:"WORTH IT     tests on every push · formatting · deploys\n             dependency updates · backups (and restore drills)\n\nUSUALLY NOT  a task done twice a year\n             a process whose rules change monthly\n             anything needing judgement on every run\n\nRULE         if it runs unattended, it must alert on failure"},
+ r:["Toil","Continuous Integration","Runbook","Script"]},
+
+{t:"Design Patterns", d:"Named, reusable solutions to problems that keep recurring in software design.", l:"core", g:["practice","architecture","crash-course"],
+ b:["Singleton, Factory, Observer, Strategy, Adapter and the rest. The genuine value is vocabulary: saying *let us use an adapter here* communicates a whole design in two words to anyone who knows the name, which is faster than describing the structure.",
+    "The classic misuse is treating them as a checklist and applying patterns to problems that do not have them, which produces four classes where one function would do. A pattern is a description of a solution people kept arriving at independently, not a target. The right time to reach for one is when you notice you already have the problem it addresses."],
+ k:["Named solutions to recurring design problems — their value is shared vocabulary.",
+    "Apply them when you already have the problem, not preemptively.",
+    "Over-application is the common failure: four classes where a function suffices.",
+    "Strategy, Adapter, Observer and Factory cover most real cases."],
+ x:{lang:"text", code:"Strategy   swap an algorithm at runtime      (pluggable sort, pricing rules)\nAdapter    make an incompatible API fit      (wrap a third-party client)\nObserver   notify many on one change         (events, subscriptions)\nFactory    decide which class to build       (parser per file type)\nSingleton  exactly one instance              (often a global in disguise)"},
+ r:["SOLID Principles","Composition over Inheritance","Technical Debt","Framework"]}
+
+]);

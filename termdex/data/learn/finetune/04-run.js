@@ -1,0 +1,205 @@
+/* Fine-Tuning & Model Adaptation — running the training. */
+TD.addLessons("finetune", [
+
+{
+ t: "Running the Training",
+ m: "run",
+ lvl: "core",
+ s: "The whole script, the hyperparameters that matter, reading a loss curve, and renting a GPU without wasting money.",
+ goal: [
+  "Run a complete QLoRA fine-tune end to end and know what every argument does",
+  "Diagnose a training run from its loss curve rather than waiting for it to finish",
+  "Rent GPU time without paying for hours you did not use"
+ ],
+ b: [
+  { p: "By this point the decision is made, the dataset is clean and formatted, and the memory arithmetic says it fits. What remains is about forty lines of code and the judgement to read what happens." },
+
+  { h: "The whole script" },
+  { code: { lang: "python", file: "train.py", t: "A complete QLoRA run",
+    lines: [
+     { c: "import torch", w: "" },
+     { c: "from datasets import load_dataset", w: "" },
+     { c: "from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig", w: "" },
+     { c: "from peft import LoraConfig, prepare_model_for_kbit_training", w: "" },
+     { c: "from trl import SFTTrainer, SFTConfig", w: "" },
+     { c: "", w: "" },
+     { c: "BASE = 'meta-llama/Llama-3.1-8B-Instruct'", w: "**Start from an INSTRUCT model**, not the base one, unless you have tens of thousands of examples. The instruct model already knows how to follow instructions; you are only adjusting how.", hi: true },
+     { c: "", w: "" },
+     { c: "tok = AutoTokenizer.from_pretrained(BASE)", w: "" },
+     { c: "tok.pad_token = tok.eos_token", w: "" },
+     { c: "tok.padding_side = 'right'", w: "**Right for training, left for generation.** Getting this wrong during training corrupts the position of your answer tokens.", hi: true },
+     { c: "", w: "" },
+     { c: "model = AutoModelForCausalLM.from_pretrained(", w: "" },
+     { c: "    BASE,", w: "" },
+     { c: "    quantization_config=BitsAndBytesConfig(", w: "" },
+     { c: "        load_in_4bit=True, bnb_4bit_quant_type='nf4',", w: "" },
+     { c: "        bnb_4bit_use_double_quant=True,", w: "" },
+     { c: "        bnb_4bit_compute_dtype=torch.bfloat16),", w: "" },
+     { c: "    attn_implementation='flash_attention_2',", w: "" },
+     { c: "    device_map={'': 0},", w: "" },
+     { c: ")", w: "" },
+     { c: "model = prepare_model_for_kbit_training(model)", w: "" },
+     { c: "model.config.use_cache = False", w: "" },
+     { c: "", w: "" },
+     { c: "ds = load_dataset('json', data_files={", w: "" },
+     { c: "    'train': 'data/train.jsonl', 'validation': 'data/val.jsonl'})", w: "" },
+     { c: "", w: "" },
+     { c: "cfg = SFTConfig(", w: "" },
+     { c: "    output_dir='out/run-07',", w: "**Number your runs.** You will do more than one and you will need to compare them." },
+     { c: "    num_train_epochs=3,", w: "**2–4 for a few thousand examples.** Past that you are memorising.", hi: true },
+     { c: "    per_device_train_batch_size=2,", w: "" },
+     { c: "    gradient_accumulation_steps=8,", w: "**Effective batch = 2 × 8 = 16.** Aim for 16–64; smaller is noisy, larger wastes time on a small dataset." },
+     { c: "    learning_rate=2e-4,", w: "**1e-4 to 3e-4 for LoRA** — roughly ten times higher than full fine-tuning, because only a tiny adapter is moving. Using 2e-5 out of habit is the most common reason a LoRA run appears to do nothing.", hi: true },
+     { c: "    lr_scheduler_type='cosine',", w: "**Cosine decay.** Reliable and needs no tuning." },
+     { c: "    warmup_ratio=0.03,", w: "**A short warm-up** stops a large first step destabilising the adapter." },
+     { c: "    optim='paged_adamw_8bit',", w: "**Paged, so a memory spike does not kill the run; 8-bit to halve optimiser state.**" },
+     { c: "    bf16=True,", w: "**BF16, not FP16.** Same exponent range as FP32, so no loss scaling and far fewer NaNs." },
+     { c: "    max_grad_norm=0.3,", w: "**Gradient clipping.** Cheap insurance against a single bad batch producing a loss spike." },
+     { c: "    max_length=1536,", w: "**From your data's p99, not from a round number.**" },
+     { c: "    packing=False,", w: "**Off for instruction tuning.** Packing concatenates examples to fill the sequence — great for pre-training, and it lets one example attend to another unless the implementation handles boundaries correctly." },
+     { c: "    completion_only_loss=True,", w: "**Mask the prompt.** The previous module explains why this matters more than any hyperparameter here.", hi: true },
+     { c: "    eval_strategy='steps', eval_steps=50,", w: "**Evaluate often enough to see the turn.** Waiting until the end wastes the run." },
+     { c: "    save_strategy='steps', save_steps=50,", w: "" },
+     { c: "    load_best_model_at_end=True,", w: "**Keep the best checkpoint, not the last.** The last is usually past the point of overfitting.", hi: true },
+     { c: "    metric_for_best_model='eval_loss',", w: "" },
+     { c: "    logging_steps=10,", w: "" },
+     { c: "    report_to='wandb',", w: "**Track it.** Six runs from now you will not remember which one used r=32." },
+     { c: "    seed=42,", w: "" },
+     { c: ")", w: "" },
+     { c: "", w: "" },
+     { c: "trainer = SFTTrainer(", w: "" },
+     { c: "    model=model, args=cfg,", w: "" },
+     { c: "    train_dataset=ds['train'], eval_dataset=ds['validation'],", w: "" },
+     { c: "    peft_config=LoraConfig(", w: "" },
+     { c: "        r=16, lora_alpha=32, lora_dropout=0.05, bias='none',", w: "" },
+     { c: "        task_type='CAUSAL_LM', use_rslora=True,", w: "" },
+     { c: "        target_modules=['q_proj','k_proj','v_proj','o_proj',", w: "" },
+     { c: "                        'gate_proj','up_proj','down_proj']),", w: "" },
+     { c: "    processing_class=tok,", w: "" },
+     { c: ")", w: "" },
+     { c: "", w: "" },
+     { c: "trainer.train()", w: "" },
+     { c: "trainer.save_model('out/run-07/adapter')", w: "**Saves only the adapter** — about 160 MB, not 16 GB." }
+    ] } },
+
+  { h: "The hyperparameters that actually matter" },
+  { tbl: { t: "In order of how much they change the result",
+    h: ["Parameter", "Range", "What goes wrong"],
+    rows: [
+     ["**Data quality**", "—", "**Dominates everything below.** No setting rescues a bad dataset"],
+     ["**Learning rate**", "1e-4 – 3e-4", "Too low: nothing happens. Too high: loss spikes, gibberish"],
+     ["**Epochs**", "2–4", "Too many: memorisation, and it looks like success in the loss"],
+     ["**Rank**", "8–64", "Too high: forgetting. Too low: underfits a complex task"],
+     ["Effective batch", "16–64", "Too small: noisy gradients and an unreadable loss curve"],
+     ["Max length", "data p99", "Too long: wasted memory. Too short: truncated answers"],
+     ["Warm-up", "3–5%", "Rarely matters, occasionally saves a run"]
+    ] } },
+
+  { n: "If a run disappoints, the order to investigate is: **data, then epochs, then learning rate, then rank.** People do it in reverse — they sweep the learning rate for a week before reading fifty training examples by hand. Reading the examples is faster and finds more.",
+    nt: "Where to look first" },
+
+  { h: "Reading the loss curve" },
+  { code: { lang: "text", t: "Four shapes and what each means",
+    lines: [
+     { c: "  HEALTHY" },
+     { c: "    train  ---\\___" },
+     { c: "    val    ---\\___          both fall, val flattens near the end", hi: true },
+     { c: "    -> stop at the flattening. Later checkpoints add nothing." },
+     { c: "" },
+     { c: "  OVERFITTING" },
+     { c: "    train  ---\\____" },
+     { c: "    val    ---\\__/--        val turns UP while train keeps falling", hi: true },
+     { c: "    -> too many epochs, too little data, or rank too high." },
+     { c: "       load_best_model_at_end saves you from shipping the end." },
+     { c: "" },
+     { c: "  NOTHING HAPPENING" },
+     { c: "    train  ------------     essentially flat" },
+     { c: "    -> learning rate too low (2e-5 instead of 2e-4)," },
+     { c: "       or the adapter is not attached, or the loss is being", hi: true },
+     { c: "       computed on masked tokens only. Check" },
+     { c: "       print_trainable_parameters() first." },
+     { c: "" },
+     { c: "  UNSTABLE" },
+     { c: "    train  --\\/\\_/\\--       spikes, or NaN" },
+     { c: "    -> learning rate too high, FP16 instead of BF16, one bad", hi: true },
+     { c: "       batch, or a corrupt example. Clip gradients, drop to" },
+     { c: "       BF16, and go and look at the batch it spiked on." }
+    ] } },
+
+  { trap: "**Validation loss is not the thing you care about.** It measures next-token likelihood on held-out text, which correlates only loosely with whether the model does your task well. A run whose loss is 0.74 can be worse in production than one at 0.79. Always generate from a few checkpoints and look at the actual outputs; if you only track loss, you will pick the wrong checkpoint sooner or later." },
+
+  { h: "Generate during training, not after" },
+  { code: { lang: "python", file: "callback.py", t: "A callback that shows you what it is learning",
+    lines: [
+     { c: "from transformers import TrainerCallback", w: "" },
+     { c: "", w: "" },
+     { c: "PROBES = [", w: "" },
+     { c: "    'Extract the invoice total from: ...',", w: "" },
+     { c: "    'Summarise clause 4 of the attached agreement: ...',", w: "" },
+     { c: "    'What is the capital of France?',", w: "**Include an off-task probe.** It is your early-warning signal for catastrophic forgetting, and it costs nothing.", hi: true },
+     { c: "]", w: "" },
+     { c: "", w: "" },
+     { c: "class Probe(TrainerCallback):", w: "" },
+     { c: "    def on_evaluate(self, args, state, control, model=None, **kw):", w: "" },
+     { c: "        model.eval()", w: "" },
+     { c: "        for p in PROBES:", w: "" },
+     { c: "            ids = tok(p, return_tensors='pt').to(model.device)", w: "" },
+     { c: "            with torch.no_grad():", w: "" },
+     { c: "                out = model.generate(**ids, max_new_tokens=120,", w: "" },
+     { c: "                                     do_sample=False)", w: "**Greedy, so runs are comparable.**" },
+     { c: "            print(f'[step {state.global_step}] {tok.decode(out[0])}')", w: "" },
+     { c: "        model.train()", w: "" },
+     { c: "", w: "" },
+     { c: "trainer.add_callback(Probe())", w: "**Two minutes to write, and it turns an opaque number into something you can read while the run is going.**", hi: true }
+    ],
+    after: "Watching the off-task probe degrade in real time is the clearest demonstration of catastrophic forgetting there is, and it lets you stop a run at step 300 instead of discovering the problem after four hours." } },
+
+  { h: "Renting a GPU without wasting money" },
+  { tbl: { t: "Where to rent, honestly",
+    h: ["Option", "8B QLoRA ≈", "Notes"],
+    rows: [
+     ["**Colab free (T4)**", "Too slow / OOM", "Fine for learning the API, not for a real run"],
+     ["**Colab Pro (L4/A100)**", "₹1,000–2,000/mo", "**The best starting point for an individual.** No infrastructure to set up"],
+     ["**Kaggle (2× T4)**", "Free, 30 h/week", "Genuinely free and genuinely usable for a 7B QLoRA"],
+     ["**Vast.ai / RunPod**", "₹40–90/hr", "**Cheapest real option.** Community hosts vary in reliability"],
+     ["**Lambda / Modal**", "₹90–180/hr", "More reliable, per-second billing"],
+     ["**AWS `g5.xlarge`**", "~₹100/hr", "Use spot for ~₹35/hr; needs a quota request first"]
+    ] } },
+
+  { l: [
+   "**Debug on the smallest thing that works.** Get the script running end to end on a 0.5B model and 50 examples locally, or on a free tier. Every configuration bug is much cheaper to find there.",
+   "**Then run 100 steps on the real model** before committing to the full run. Confirm the loss moves and the probes look sane.",
+   "**Estimate the wall-clock before you start.** Steps = examples × epochs / effective batch. Multiply by your measured seconds-per-step. If the answer is fourteen hours, decide that now rather than at hour thirteen.",
+   "**Checkpoint often and to durable storage.** A spot instance reclaimed at hour three with no checkpoint is three hours of rent for nothing.",
+   "**Set a shutdown.** `sudo shutdown -h +240` at launch. The commonest way to waste money on a rented GPU is a finished job on a running machine."
+  ] },
+
+  { tryit: { t: "Run it, and keep the log",
+    task: "Fine-tune an 8B instruct model with QLoRA on your own dataset. Before starting: predict the memory, predict the wall-clock, and write down what result would make you call it a success. During: watch the probes. After: record the actual numbers against your predictions, and write two paragraphs on what you would change next time.",
+    hint: "Writing the success criterion before the run is what stops you rationalising a mediocre result afterwards. It is the same discipline as pre-registering an experiment.",
+    sol: { lang: "text", code: "# run-07  Llama-3.1-8B-Instruct, QLoRA r=16, 6,388 examples\n\nPREDICTED\n  memory        ~11 GB      (arithmetic from the peft lesson)\n  steps         6388 x 3 / 16 = 1,198\n  s/step        ~2.4s on an A10G\n  wall-clock    ~48 min\n  cost          Rs 100/hr x 0.8 = Rs 80\n  SUCCESS IF    held-out F1 >= 0.88 AND MMLU drop < 2 points\n\nACTUAL\n  memory        12.4 GB     (context + fragmentation, as expected)\n  s/step        3.1s        (longer sequences than I estimated)\n  wall-clock    62 min\n  cost          Rs 103\n  held-out F1   0.891       PASS\n  MMLU          0.681 -> 0.672  (-0.9)   PASS\n\nLOSS CURVE\n  train 1.84 -> 0.63, smooth\n  val   1.79 -> 0.71, flattened around step 850\n  best checkpoint: step 900 of 1,198\n  -> the last 25% of the run added nothing. 2 epochs would\n     have been enough, saving 15 minutes and some forgetting.\n\nPROBES\n  step 0    off-task probe: correct, fluent\n  step 300  on-task output already in the right format\n  step 900  on-task good; off-task slightly terser but correct\n  step 1198 off-task noticeably clipped -- the first visible\n            sign of forgetting, and it matches the MMLU drop\n\nNEXT TIME\n  1. Two epochs, not three. The val curve had flattened and\n     the third epoch only cost general capability.\n  2. max_length 1536 was right (data p99 was 1,180) but I set\n     it by guessing first and got lucky. Measure it up front.\n  3. Add a second off-task probe in Hindi -- my eval set is\n     English-only and 30% of production is not, so I currently\n     cannot see whether I broke it." },
+    w: "The run log is the artefact, not the model. It is what you will show in a project deep-dive, it is what lets you compare run 12 against run 7 three weeks later, and the \"next time\" section is the part an interviewer will find most convincing — because it demonstrates that you learned from the run rather than merely completed it." } },
+
+  { vocab: ["Learning Rate", "Epoch", "Batch Size", "Overfitting", "Checkpoint", "Learning Rate Schedule", "Gradient Clipping"] }
+ ],
+ k: [
+  "Start from the instruct model, not the base, unless you have tens of thousands of examples.",
+  "LoRA wants a learning rate around 2e-4 — roughly ten times full fine-tuning, and using 2e-5 is why runs appear to do nothing.",
+  "`load_best_model_at_end`, because the last checkpoint is usually past the point of overfitting.",
+  "Generate from probes during training, including one off-task probe, to see forgetting as it happens.",
+  "Debug on a tiny model, run 100 steps on the real one, then commit — and always schedule a shutdown."
+ ],
+ r: ["Learning Rate", "Epoch", "Batch Size", "Overfitting", "Checkpoint", "Gradient Clipping", "Catastrophic Forgetting"],
+ drill: {
+  lang: "python",
+  reps: 3,
+  items: [
+   { c: "learning_rate=2e-4, lr_scheduler_type='cosine', warmup_ratio=0.03", w: "the LoRA learning rate and schedule that actually move the adapter" },
+   { c: "load_best_model_at_end=True, metric_for_best_model='eval_loss'", w: "keep the best checkpoint rather than the last one" },
+   { c: "optim='paged_adamw_8bit', bf16=True, max_grad_norm=0.3", w: "the optimiser settings that survive a memory spike and a bad batch" },
+   { c: "trainer.add_callback(Probe())", w: "watch what the model is actually producing while it trains" }
+  ]
+ }
+}
+
+]);

@@ -1,0 +1,165 @@
+/* The last concepts the roadmap names that the dictionary did not define:
+   balanced-tree variants, regularised regression, the modern DL components,
+   and the rate-limiting and hashing vocabulary from the design section. */
+
+TD.add("cs-fundamentals", [
+
+{t:"AVL Tree", d:"A binary search tree that rebalances on every insert and delete to keep its height strictly logarithmic.", l:"advanced", g:["structures","fundamentals"],
+ b:["Every node stores the difference in height between its subtrees, and that difference is never allowed past one. When an insert or delete breaks the rule, one or two rotations restore it. The strictness guarantees a height of about 1.44 log n, which is as close to perfectly balanced as a practical tree gets.",
+    "That makes lookups fast and writes comparatively expensive, since more rotations are needed than in a looser scheme. Red-black trees accept a taller tree in exchange for cheaper writes, which is why most standard libraries chose those instead."],
+ k:["Subtree heights differ by at most one, enforced by rotations.",
+    "Height ~1.44 log n — the most tightly balanced common BST.",
+    "Faster lookups than red-black; more rotations, so slower writes.",
+    "Choose it for read-heavy workloads; red-black for write-heavy ones."],
+ x:{lang:"text", code:"insert breaks the balance:      rotate:\n     3                            2\n    /                            / \\\n   2            ->              1   3\n  /\n 1        balance factor -2      restored to 0"},
+ r:["Red-Black Tree","Binary Search Tree","Balanced Binary Tree","B-Tree"]},
+
+{t:"Red-Black Tree", d:"A self-balancing binary search tree using node colours and looser rules, so writes need fewer rotations.", l:"advanced", g:["structures","fundamentals"],
+ b:["Each node is red or black, and the invariants — a red node has no red child, and every path from a node to its leaves contains the same number of black nodes — bound the height at about 2 log n. That is looser than an AVL tree's guarantee, and deliberately so.",
+    "The looseness is the feature: fewer rotations per insert and delete makes writes cheaper, at the cost of a slightly taller tree and marginally slower lookups. That trade-off is why Java's `TreeMap`, C++'s `std::map` and the Linux kernel's scheduler all use red-black trees rather than AVL."],
+ k:["Colour invariants bound the height at about 2 log n.",
+    "Looser balance than AVL, so fewer rotations and cheaper writes.",
+    "Used by Java's TreeMap, C++'s std::map, and the Linux scheduler.",
+    "Rebalancing is O(1) amortised rotations per operation."],
+ x:{lang:"text", code:"invariants:\n  the root is black\n  a red node never has a red child\n  every root-to-leaf path has the same count of black nodes\n\n-> longest path is at most twice the shortest"},
+ r:["AVL Tree","Binary Search Tree","Balanced Binary Tree","B-Tree"]},
+
+{t:"Inverse Ackermann", a:"α(n)", d:"A function that grows so slowly it is below 5 for any input that could exist — the complexity of Union-Find.", l:"advanced", g:["complexity","fundamentals"],
+ b:["The Ackermann function grows faster than any primitive recursive function; its inverse therefore grows almost imperceptibly. For n up to the number of atoms in the observable universe, α(n) is at most 4.",
+    "It appears as the amortised cost of Union-Find with both path compression and union by rank. Saying *O(α(n)), which is effectively constant for any real input* is the precise version of *basically O(1)*, and interviewers notice the difference."],
+ k:["Grows so slowly that α(n) ≤ 4 for any physically realisable n.",
+    "The amortised cost of Union-Find with path compression and union by rank.",
+    "*Effectively constant* is accurate; *is O(1)* is not.",
+    "The inverse of the Ackermann function, which grows explosively."],
+ x:{lang:"text", code:"alpha(n) <= 4  for every n below ~2^65536\n\nso Union-Find is O(alpha(n)) per operation\n  = effectively O(1), but say the precise version"},
+ r:["Union-Find","Amortised Analysis","Time Complexity","Big O Notation"]},
+
+{t:"Consistent Hashing", d:"Mapping keys to servers around a ring, so adding or removing a server only remaps a small fraction of keys.", l:"advanced", g:["distributed","fundamentals"],
+ b:["Plain modulo hashing (`hash(key) % n`) is catastrophic when n changes: almost every key moves, so the whole cache is invalidated at once. Consistent hashing places both servers and keys on a conceptual ring, and each key belongs to the first server clockwise from it. Adding a server then only steals keys from its immediate neighbour.",
+    "Roughly 1/n of keys move instead of nearly all of them. Virtual nodes — placing each physical server at many ring positions — smooth out the uneven distribution that a small number of servers would otherwise produce, and make it possible to weight servers by capacity."],
+ k:["Servers and keys on a ring; a key goes to the first server clockwise.",
+    "Adding or removing a server remaps ~1/n of keys, not all of them.",
+    "`hash % n` remaps nearly everything when n changes — the failure it fixes.",
+    "Virtual nodes even out the distribution and allow weighting by capacity."],
+ x:{lang:"text", code:"hash % n     add one server -> ~100% of keys move -> cache stampede\nring         add one server -> ~1/n of keys move -> barely a ripple\n\nvirtual nodes: each server sits at ~150 ring positions\n               so the load spreads evenly"},
+ r:["Sharding","Hash Table","Load Balancing","Cache"]},
+
+{t:"Thundering Herd", d:"Many clients hitting the origin simultaneously the moment a popular cache entry expires.", l:"advanced", g:["distributed","fundamentals"],
+ b:["A hot key expires; a thousand in-flight requests all miss, and all thousand recompute the same value against the database at once. The load spike can take down the very backend the cache existed to protect, and it arrives without warning at whatever moment the TTL happens to end.",
+    "Three standard defences. A lock or single-flight so only one request recomputes while the others wait; probabilistic early expiry so entries refresh slightly before their TTL at randomised times; and serving the stale value while refreshing in the background. Adding jitter to TTLs also stops many keys expiring in the same instant."],
+ k:["A hot key expires and every waiting request recomputes it at once.",
+    "The spike can take down the backend the cache was protecting.",
+    "Fixes: single-flight locking, early probabilistic refresh, stale-while-revalidate.",
+    "Jitter your TTLs so many keys do not expire simultaneously."],
+ x:{lang:"python", code:"# single-flight: one recompute, everyone else waits for it\nasync def get(key):\n    if (v := cache.get(key)) is not None:\n        return v\n    async with locks[key]:                # only one gets through\n        if (v := cache.get(key)) is not None:\n            return v                       # someone else already did it\n        v = await expensive_fetch(key)\n        cache.set(key, v, ttl=300 + random.randint(0, 60))   # jitter\n        return v"},
+ r:["Cache","Cache Invalidation","Rate Limit","Load Balancing"]},
+
+{t:"Token Bucket", d:"A rate-limiting algorithm that refills tokens at a steady rate and lets requests spend them, permitting controlled bursts.", l:"intermediate", g:["distributed","fundamentals"],
+ b:["A bucket holds up to N tokens and refills at a fixed rate. Each request removes one; if the bucket is empty the request is rejected or queued. Because unused tokens accumulate up to the cap, a client that has been quiet can briefly burst — which usually matches how real traffic behaves.",
+    "That burst tolerance is the difference from a leaky bucket, which enforces a strictly even output rate. Token bucket is the more common choice for API rate limiting precisely because occasional bursts are normal and refusing them is unnecessarily harsh."],
+ k:["Tokens refill at a fixed rate, up to a maximum; each request spends one.",
+    "Accumulated tokens allow a controlled burst after a quiet period.",
+    "The usual choice for API rate limiting — bursts are normal traffic.",
+    "Two parameters: refill rate (sustained) and capacity (maximum burst)."],
+ x:{lang:"python", code:"class TokenBucket:\n    def __init__(self, rate, capacity):\n        self.rate, self.cap = rate, capacity\n        self.tokens, self.last = capacity, time.time()\n\n    def allow(self):\n        now = time.time()\n        self.tokens = min(self.cap, self.tokens + (now - self.last) * self.rate)\n        self.last = now\n        if self.tokens >= 1:\n            self.tokens -= 1; return True\n        return False"},
+ r:["Leaky Bucket","Rate Limiting","Rate Limit","Sliding Window"]},
+
+{t:"Leaky Bucket", d:"A rate-limiting algorithm that drains a request queue at a strictly constant rate, smoothing all bursts away.", l:"intermediate", g:["distributed","fundamentals"],
+ b:["Requests enter a fixed-size queue and leave at a constant rate, like water leaking from a bucket with a hole. If the queue is full, new arrivals are dropped. The output rate is perfectly even no matter how uneven the input was.",
+    "That is exactly the opposite trade-off from a token bucket, which permits bursts. Choose a leaky bucket when the downstream system genuinely cannot absorb a spike — a legacy service, a hardware device, a strict provider quota — and a token bucket when short bursts are acceptable."],
+ k:["A fixed-size queue drained at a constant rate; overflow is dropped.",
+    "Output is perfectly smooth — no bursts ever reach downstream.",
+    "Opposite trade-off from a token bucket, which permits bursts.",
+    "Use it when the downstream system truly cannot absorb a spike."],
+ x:{lang:"text", code:"token bucket   quiet then burst -> burst allowed\nleaky bucket   quiet then burst -> still drips out evenly\n\nchoose leaky when downstream cannot take a spike at all"},
+ r:["Token Bucket","Rate Limiting","Message Queue","Throughput"]}
+
+]);
+
+TD.add("ai-ml-core", [
+
+{t:"Lasso", a:"L1 Regularisation", d:"A penalty on the sum of absolute coefficients that drives some of them to exactly zero, performing feature selection.", l:"intermediate", g:["regression","regularisation"],
+ b:["Adding λ·Σ|w| to the loss shrinks coefficients, and because of the geometry of the absolute-value penalty it pushes many of them to exactly zero rather than merely small. The zeroed features drop out of the model entirely, which makes Lasso a feature selector as well as a regulariser.",
+    "That is the practical difference from Ridge, which shrinks coefficients smoothly and keeps them all. Lasso is what you want when you suspect most features are irrelevant and you value an interpretable, sparse model; its weakness is arbitrariness among correlated features, since it tends to pick one and zero the rest."],
+ k:["Penalises Σ|w|; drives coefficients to **exactly zero**.",
+    "Doubles as automatic feature selection — the zeros drop out.",
+    "Among correlated features it picks one arbitrarily and zeroes the others.",
+    "Elastic Net blends L1 and L2 to get sparsity without that arbitrariness."],
+ x:{lang:"python", code:"from sklearn.linear_model import Lasso\n\nm = Lasso(alpha=0.1).fit(X, y)\n(m.coef_ != 0).sum()        # far fewer than X.shape[1]\n# the surviving features are the selection"},
+ r:["Ridge Regression","Regularisation","Linear Regression","Feature Selection"]},
+
+{t:"Ridge Regression", a:"L2 Regularisation", d:"A penalty on the sum of squared coefficients that shrinks them all smoothly without eliminating any.", l:"intermediate", g:["regression","regularisation"],
+ b:["Adding λ·Σw² to the loss discourages large coefficients, which reduces variance and makes the model less sensitive to noise in the training data. Unlike Lasso it shrinks towards zero without reaching it, so every feature is retained with a reduced weight.",
+    "It handles correlated features gracefully by splitting the weight between them rather than picking one, which is exactly where Lasso behaves arbitrarily. The rule of thumb: Ridge when you believe most features carry some signal, Lasso when you believe most do not, and Elastic Net when you want both properties."],
+ k:["Penalises Σw²; shrinks every coefficient but zeroes none.",
+    "Reduces variance and handles multicollinearity gracefully.",
+    "Splits weight between correlated features instead of choosing arbitrarily.",
+    "Ridge if most features matter; Lasso if most do not; Elastic Net for both."],
+ x:{lang:"python", code:"from sklearn.linear_model import Ridge, ElasticNet\n\nRidge(alpha=1.0).fit(X, y)                       # all features kept\nElasticNet(alpha=0.1, l1_ratio=0.5).fit(X, y)    # sparsity + stability"},
+ r:["Lasso","Regularisation","Linear Regression","Bias-Variance Tradeoff"]},
+
+{t:"Stratified Sampling", d:"Splitting data so every subset preserves the original proportion of each class.", l:"intermediate", g:["validation"],
+ b:["A random split of an imbalanced dataset can easily produce a fold with very few positives — or none at all — which makes the resulting metric meaningless and the training unstable. Stratifying draws from each class proportionally so every fold mirrors the overall distribution.",
+    "It should be the default for any classification problem, and it matters most exactly where it is most often forgotten: rare-class problems such as fraud and disease detection. It does not apply to time series, where the split must be chronological regardless of class balance."],
+ k:["Each split preserves the original class proportions.",
+    "Essential on imbalanced data — a random fold can contain zero positives.",
+    "`stratify=y` in scikit-learn; `StratifiedKFold` for cross-validation.",
+    "Never use it on time series — those must be split chronologically."],
+ x:{lang:"python", code:"from sklearn.model_selection import train_test_split, StratifiedKFold\n\nX_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, stratify=y)\n\ncv = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)"},
+ r:["Cross-Validation","Class Imbalance","Data Leakage","Sampling"]}
+
+]);
+
+TD.add("deep-learning", [
+
+{t:"SiLU", a:"Swish", d:"The activation `x · sigmoid(x)` — smooth, non-monotonic, and standard in modern LLM feed-forward blocks.", l:"intermediate", g:["activations"],
+ b:["Unlike ReLU it is smooth everywhere and dips slightly below zero for small negative inputs before returning towards zero. That smoothness gives better-behaved gradients, and the small negative region avoids the dying-ReLU problem where a neuron stuck at zero output stops learning entirely.",
+    "It appears in Llama and most current LLMs inside a SwiGLU block — a gated feed-forward layer where one projection is passed through SiLU and multiplied by another. Being able to say *SwiGLU, which is a gated feed-forward using SiLU* is the level of detail these questions look for."],
+ k:["`x · sigmoid(x)`: smooth, non-monotonic, slightly negative near zero.",
+    "Avoids dying ReLU, since the gradient is never exactly zero.",
+    "Used inside SwiGLU feed-forward blocks in Llama and most modern LLMs.",
+    "Slightly more expensive than ReLU; the quality gain is worth it at scale."],
+ x:{lang:"python", code:"import torch.nn.functional as F\n\nF.silu(x)                       # x * sigmoid(x)\n\n# SwiGLU, as used in Llama:\n#   out = W2( silu(W1 @ x) * (W3 @ x) )\n#                            ^ the gate"},
+ r:["ReLU","GELU","Activation Function","Sigmoid"]},
+
+{t:"AdamW", d:"Adam with decoupled weight decay — the standard optimiser for training transformers.", l:"intermediate", g:["optimisers"],
+ b:["Adam's original L2 regularisation is folded into the gradient, where the adaptive per-parameter learning rates then rescale it — so parameters with large gradient history end up decayed less, which is not what regularisation is supposed to do. AdamW instead applies the decay directly to the weights, separately from the gradient update.",
+    "That single change measurably improves generalisation, and it is why AdamW rather than Adam is used across essentially all transformer training. If asked *what optimiser do LLMs use*, the answer is AdamW, and the reason is decoupled weight decay."],
+ k:["Weight decay applied directly to weights, not folded into the gradient.",
+    "In plain Adam, adaptive scaling distorts L2 regularisation.",
+    "The standard for transformer training — the expected one-word answer.",
+    "Typical settings: lr 1e-4 to 3e-4, betas (0.9, 0.95), weight decay 0.1."],
+ x:{lang:"python", code:"import torch\n\nopt = torch.optim.AdamW(model.parameters(),\n                        lr=2e-4, betas=(0.9, 0.95), weight_decay=0.1)\n\n# torch.optim.Adam(weight_decay=...) is the WRONG one for transformers"},
+ r:["Adam Optimiser","Stochastic Gradient Descent","Regularisation","Learning Rate"]},
+
+{t:"RMSNorm", a:"Root Mean Square Normalisation", d:"A cheaper LayerNorm that rescales by root-mean-square without subtracting the mean.", l:"intermediate", g:["normalisation"],
+ b:["LayerNorm centres the activations by subtracting their mean and then rescales by their standard deviation. RMSNorm skips the centring step entirely and divides by the root mean square, keeping only a learned scale parameter and no bias.",
+    "The finding that made it standard is that the re-centring contributes little — quality holds while the operation gets cheaper and simpler. Llama, Mistral and most current LLMs use it, so *why RMSNorm rather than LayerNorm* has a crisp answer: same quality, less computation."],
+ k:["Divides by root-mean-square; no mean subtraction and no bias term.",
+    "Cheaper than LayerNorm with equivalent quality — that is why it won.",
+    "Used in Llama, Mistral and most current LLMs.",
+    "Still normalises across the feature dimension, so batch size is irrelevant."],
+ x:{lang:"python", code:"def rms_norm(x, weight, eps=1e-6):\n    rms = x.pow(2).mean(-1, keepdim=True).add(eps).rsqrt()\n    return x * rms * weight          # no mean subtraction, no bias"},
+ r:["Layer Normalisation","Batch Normalisation","Activation Function","Residual Connection"]},
+
+{t:"Learning Rate Warmup", d:"Starting training at a very small learning rate and ramping it up over the first few hundred steps.", l:"intermediate", g:["training"],
+ b:["At initialisation the model's parameters are random and gradients are large and poorly conditioned. Applying the full learning rate immediately can destabilise training badly, and with adaptive optimisers like Adam the moment estimates are also unreliable in the first steps because they are built from almost no history.",
+    "Warmup ramps the rate up linearly over a few hundred to a few thousand steps, then hands over to a decay schedule — cosine decay being the usual choice. It is close to mandatory for transformer training, where skipping it commonly produces a loss that diverges or plateaus immediately."],
+ k:["Ramp the learning rate up over the first few hundred to few thousand steps.",
+    "Early gradients are large and Adam's moment estimates are unreliable.",
+    "Effectively required for transformers; skipping it often diverges.",
+    "Usually followed by cosine decay — warmup then anneal."],
+ x:{lang:"python", code:"from transformers import get_cosine_schedule_with_warmup\n\nsched = get_cosine_schedule_with_warmup(\n    opt, num_warmup_steps=500, num_training_steps=10_000)\n\n# lr: 0 -> peak over 500 steps, then cosine decay to ~0"},
+ r:["Learning Rate","AdamW","Gradient Clipping","Loss Function"]},
+
+{t:"Mamba", d:"A state-space sequence model with sub-quadratic scaling and a constant-size recurrent state, and the main non-transformer contender.", l:"advanced", g:["architectures"],
+ b:["Instead of attention's all-pairs comparison, it maintains a fixed-size hidden state updated as tokens stream past — closer to an RNN, but with a selection mechanism that lets the state depend on the input, which is what earlier state-space models lacked and why they underperformed.",
+    "The consequence that matters for serving is memory: the state is constant per token rather than a KV cache that grows with sequence length, so very long sequences cost far less. In practice it is usually hybridised, with a few attention layers interleaved among Mamba blocks, because pure state-space models still trail transformers on tasks needing precise recall of specific earlier tokens."],
+ k:["Constant-size recurrent state instead of a KV cache that grows with length.",
+    "Sub-quadratic in sequence length, where attention is quadratic.",
+    "Input-dependent selection is what made it competitive with transformers.",
+    "Usually hybridised with attention layers; pure SSMs lag on precise recall."],
+ x:{lang:"text", code:"transformer  KV cache grows with sequence length   O(n^2) attention\nMamba        fixed-size state, updated per token    O(n) overall\n\nhybrid: mostly Mamba blocks with a few attention layers\n        for the precise-recall cases"},
+ r:["Self-Attention","KV Cache","Recurrent Neural Network","Sliding Window Attention"]}
+
+]);

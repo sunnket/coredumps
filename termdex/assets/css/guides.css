@@ -1,0 +1,962 @@
+/* Guides — how-to recipes
+   ============================================================================
+   Two views: an index of cards, and a detail page built as a vertical track.
+
+   The track is the important one. A recipe is read while doing, with a
+   terminal in the other window, so the eye needs to find its place again and
+   again. Everything here serves that: a numbered rail you can tick off, the
+   command as the visually loudest thing in each step, and a clear separation
+   between the instruction, the expected output, and the warning.
+
+   All motion is CSS. It respects prefers-reduced-motion, and every diagram is
+   readable as a still image with the animation switched off.
+   ========================================================================= */
+
+.gd-wrap {
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 0 0 80px;
+}
+
+/* ---- index hero ---- */
+
+.gd-hero {
+  padding: 8px 0 22px;
+}
+
+.gd-kicker {
+  margin: 0 0 10px;
+  font-size: var(--fs-xs);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.gd-hero h1 {
+  margin: 0 0 12px;
+  font-family: var(--font-head);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 3.4vw, 2.7rem);
+  line-height: 1.14;
+  letter-spacing: -.018em;
+}
+
+.gd-lede {
+  margin: 0;
+  max-width: 64ch;
+  font-size: var(--fs-md);
+  line-height: 1.62;
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+
+/* ---- tools row ---- */
+
+.gd-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 22px 0 14px;
+}
+
+.gd-search {
+  flex: 1 1 260px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  background: var(--surface);
+  border: 1px solid var(--surface-3);
+  border-radius: var(--r-md);
+  transition: border-color var(--t-fast) var(--ease-out);
+}
+
+.gd-search:focus-within {
+  border-color: var(--accent);
+}
+
+.gd-search svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-3);
+  flex: none;
+}
+
+.gd-search input {
+  flex: 1;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-base);
+  padding: 10px 0;
+  outline: none;
+}
+
+/* platform switch — two states, so a segmented control rather than a dropdown */
+.gd-os {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--surface-3);
+  border-radius: var(--r-md);
+}
+
+.gd-os button {
+  border: 0;
+  background: none;
+  color: var(--text-3);
+  font: inherit;
+  font-size: var(--fs-sm);
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out);
+}
+
+.gd-os button:hover { color: var(--text-2); }
+
+.gd-os button.is-on {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+/* ---- group filter chips ---- */
+
+.gd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 20px;
+}
+
+.gd-chip-f {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--surface-3);
+  background: var(--surface);
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease-out),
+              color var(--t-fast) var(--ease-out);
+}
+
+.gd-chip-f span {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.gd-chip-f:hover { color: var(--text); border-color: var(--surface-hi); }
+
+.gd-chip-f.is-on {
+  border-color: var(--gc, var(--accent));
+  color: var(--text);
+}
+
+.gd-chip-f.is-on span { color: var(--gc, var(--accent)); }
+
+/* ---- cards ---- */
+
+.gd-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 12px;
+}
+
+.gd-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 16px 13px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--surface-3);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--t-fast) var(--ease-out),
+              transform var(--t-fast) var(--ease-out);
+}
+
+/* the group's colour as a hairline down the left edge — enough to group the
+   cards by eye without a heading for every group */
+.gd-card::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--gc, var(--accent));
+  opacity: .55;
+  transition: opacity var(--t-fast) var(--ease-out);
+}
+
+.gd-card:hover {
+  border-color: var(--surface-hi);
+  transform: translateY(-2px);
+}
+
+.gd-card:hover::before { opacity: 1; }
+
+.gd-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.gd-card-grp {
+  font-size: var(--fs-xs);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--gc, var(--accent));
+}
+
+.gd-card-mins {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.gd-card h3 {
+  margin: 0;
+  font-family: var(--font-head);
+  font-weight: 500;
+  font-size: var(--fs-md);
+  line-height: 1.28;
+}
+
+.gd-card p {
+  margin: 0;
+  flex: 1;
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--text-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gd-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 3px;
+  padding-top: 10px;
+  border-top: 1px solid var(--surface-2);
+}
+
+.gd-card-steps {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+
+.gd-card-pr {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.gd-card-pr i {
+  display: block;
+  height: 100%;
+  background: var(--gc, var(--accent));
+  border-radius: 2px;
+}
+
+.gd-card-pct {
+  font-size: var(--fs-xs);
+  color: var(--gc, var(--accent));
+  font-variant-numeric: tabular-nums;
+}
+
+.gd-card-go {
+  margin-left: auto;
+  color: var(--text-3);
+  display: grid;
+  place-items: center;
+  transition: transform var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out);
+}
+
+.gd-card-go svg { width: 15px; height: 15px; }
+
+.gd-card:hover .gd-card-go {
+  color: var(--gc, var(--accent));
+  transform: translateX(3px);
+}
+
+.gd-empty {
+  grid-column: 1 / -1;
+  padding: 34px 0;
+  text-align: center;
+  color: var(--text-2);
+}
+
+/* ---- detail ---- */
+
+.gd-crumb {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  padding: 4px 0 18px;
+}
+
+.gd-crumb a { color: var(--text-3); text-decoration: none; }
+.gd-crumb a:hover { color: var(--text); }
+
+.gd-dhead h1 {
+  margin: 0 0 12px;
+  font-family: var(--font-head);
+  font-weight: 400;
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  line-height: 1.16;
+  letter-spacing: -.016em;
+}
+
+.gd-why {
+  margin: 0 0 16px;
+  max-width: 66ch;
+  font-size: var(--fs-md);
+  line-height: 1.62;
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+
+.gd-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.gd-meta-i {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+}
+
+.gd-meta-i svg { width: 14px; height: 14px; }
+
+.gd-os-sm button { padding: 5px 10px; font-size: var(--fs-xs); }
+
+/* prerequisites */
+.gd-need {
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--surface-3);
+  border-left: 2px solid var(--gc, var(--accent));
+}
+
+.gd-need > span {
+  display: block;
+  font-size: var(--fs-xs);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+
+.gd-need ul { margin: 0; padding-left: 17px; }
+
+.gd-need li {
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+/* ---- progress ---- */
+
+.gd-prog {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 26px 0 6px;
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+}
+
+.gd-prog-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.gd-prog-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--gc, var(--accent));
+  transition: width var(--t-mid) var(--ease-out);
+}
+
+.gd-prog span { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.gd-reset {
+  border: 0;
+  background: none;
+  color: var(--text-3);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.gd-reset:hover { color: var(--text); }
+
+/* ---- the step track ---- */
+
+.gd-steps {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  position: relative;
+}
+
+.gd-step {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 14px;
+  padding-bottom: 22px;
+  position: relative;
+}
+
+/* the connecting rail between step numbers */
+.gd-step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 34px;
+  bottom: 0;
+  width: 1px;
+  background: var(--surface-3);
+}
+
+.gd-step-n {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--surface-3);
+  background: var(--surface);
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  position: relative;
+  z-index: 1;
+  transition: border-color var(--t-fast) var(--ease-out),
+              background var(--t-fast) var(--ease-out),
+              color var(--t-fast) var(--ease-out);
+}
+
+.gd-step-n:hover { border-color: var(--gc, var(--accent)); }
+
+.gd-step-num,
+.gd-step-tick {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  transition: opacity var(--t-fast) var(--ease-out),
+              transform var(--t-fast) var(--ease-out);
+}
+
+.gd-step-tick { opacity: 0; transform: scale(.5); }
+.gd-step-tick svg { width: 15px; height: 15px; }
+
+.gd-step.is-done .gd-step-n {
+  background: var(--gc, var(--accent));
+  border-color: var(--gc, var(--accent));
+  color: var(--bg);
+}
+
+.gd-step.is-done .gd-step-num { opacity: 0; transform: scale(.5); }
+.gd-step.is-done .gd-step-tick { opacity: 1; transform: scale(1); }
+
+/* a completed step recedes rather than disappearing — you still need to be
+   able to re-read it, but it should not compete with where you are now */
+.gd-step.is-done .gd-step-b { opacity: .52; }
+
+.gd-step-b { min-width: 0; padding-top: 4px; }
+
+.gd-step-do {
+  margin: 0 0 9px;
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* ---- command block ---- */
+
+.gd-cmd {
+  position: relative;
+  margin: 0 0 9px;
+  border-radius: var(--r-md);
+  background: var(--bg-2);
+  border: 1px solid var(--surface-3);
+  overflow: hidden;
+}
+
+.gd-cmd pre {
+  margin: 0;
+  padding: 11px 44px 11px 13px;
+  overflow-x: auto;
+}
+
+.gd-cmd code {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: var(--fs-sm);
+  line-height: 1.62;
+  color: var(--text);
+  white-space: pre;
+  background: none;
+  padding: 0;
+}
+
+.gd-copy {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 27px;
+  height: 27px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-3);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out);
+}
+
+.gd-cmd:hover .gd-copy,
+.gd-copy:focus-visible { opacity: 1; }
+
+.gd-copy svg { width: 14px; height: 14px; }
+.gd-copy:hover { color: var(--text); }
+
+.gd-copy.is-copied {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.gd-cmd-os {
+  position: absolute;
+  bottom: 6px;
+  right: 10px;
+  font-size: 10px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+/* ---- expected output, and the warning ---- */
+
+.gd-out {
+  margin: 0 0 8px;
+  padding-left: 12px;
+  border-left: 2px solid var(--accent-line, var(--surface-hi));
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+.gd-out span {
+  display: block;
+  font-size: 10px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 2px;
+}
+
+.gd-note {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.58;
+  color: var(--text-3);
+}
+
+.gd-note code,
+.gd-out code,
+.gd-step-do code {
+  font-size: .92em;
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  background: var(--surface-2);
+}
+
+/* ---- troubleshooting ---- */
+
+.gd-fix {
+  margin-top: 30px;
+  padding: 18px 20px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--surface-3);
+}
+
+.gd-fix h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  font-family: var(--font-head);
+  font-weight: 500;
+  font-size: var(--fs-md);
+}
+
+.gd-fix h2 svg { width: 16px; height: 16px; color: var(--text-3); }
+
+.gd-fix dl { margin: 0; }
+
+.gd-fix dt {
+  font-size: var(--fs-sm);
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.gd-fix dt::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-3);
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.gd-fix dd {
+  margin: 0 0 14px 13px;
+  font-size: var(--fs-sm);
+  line-height: 1.58;
+  color: var(--text-2);
+}
+
+.gd-fix dd:last-child { margin-bottom: 0; }
+
+/* ---- next ---- */
+
+.gd-next { margin-top: 28px; }
+
+.gd-next h2 {
+  margin: 0 0 11px;
+  font-family: var(--font-head);
+  font-weight: 500;
+  font-size: var(--fs-md);
+}
+
+.gd-next-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.gd-next-row a {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 13px 15px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--surface-3);
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+  border-left: 2px solid var(--gc, var(--accent));
+  transition: border-color var(--t-fast) var(--ease-out),
+              transform var(--t-fast) var(--ease-out);
+}
+
+.gd-next-row a:hover { transform: translateX(2px); }
+
+.gd-next-row b {
+  font-weight: 500;
+  font-size: var(--fs-sm);
+  line-height: 1.35;
+}
+
+.gd-next-row span { font-size: var(--fs-xs); color: var(--text-3); }
+
+/* ---- diagrams -------------------------------------------------------
+   Deliberately flat: one stroke weight, the theme's own colours, and no
+   fills except where a block needs to read as solid. They explain the shape
+   of the thing, so anything decorative is noise. */
+
+.gd-fig {
+  margin: 22px 0 4px;
+  padding: 16px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--surface-3);
+  overflow-x: auto;
+}
+
+.gd-svg {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  height: auto;
+  color: var(--gc, var(--accent));
+}
+
+.gd-box {
+  fill: var(--bg-2);
+  stroke: var(--surface-hi);
+  stroke-width: 1.2;
+}
+
+.gd-box-hi { stroke: var(--gc, var(--accent)); }
+.gd-box-bad { stroke: color-mix(in srgb, #f7768e 60%, transparent); }
+
+.gd-line { stroke: var(--surface-3); stroke-width: 1; }
+
+.gd-track {
+  fill: none;
+  stroke: var(--surface-hi);
+  stroke-width: 1.6;
+}
+
+.gd-track-b { stroke: var(--gc, var(--accent)); }
+
+.gd-node { fill: var(--surface-hi); }
+.gd-node-hi { fill: var(--gc, var(--accent)); }
+.gd-node-b { fill: var(--gc, var(--accent)); }
+
+.gd-lbl {
+  fill: var(--text-2);
+  font-size: 11px;
+  font-family: var(--font-body, inherit);
+}
+
+.gd-cap {
+  fill: var(--text-3);
+  font-size: 10px;
+  font-family: var(--font-body, inherit);
+}
+
+.gd-cap-b { fill: var(--gc, var(--accent)); }
+.gd-cap-bad { fill: #f7768e; }
+
+.gd-mono {
+  fill: var(--text-2);
+  font-size: 11px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.gd-sm { font-size: 9.5px; }
+.gd-ink { fill: var(--text); }
+.gd-dim { fill: var(--text-3); }
+.gd-bad { fill: #f7768e; }
+
+.gd-arrow {
+  fill: none;
+  stroke: var(--surface-hi);
+  stroke-width: 1.4;
+  color: var(--surface-hi);
+}
+
+.gd-arrow-2 { color: var(--surface-hi); }
+.gd-arrow-bad { stroke: #f7768e; color: #f7768e; }
+
+.gd-x { stroke: #f7768e; stroke-width: 1.6; fill: none; }
+
+.gd-pulse { fill: var(--gc, var(--accent)); }
+.gd-pulse-2 { fill: var(--gc, var(--accent)); opacity: .75; }
+
+.gd-dot-r { fill: #f7768e; }
+.gd-dot-y { fill: #e0af68; }
+.gd-dot-g { fill: #2fd39b; }
+
+.gd-hl { fill: color-mix(in srgb, var(--gc, var(--accent)) 15%, transparent); }
+.gd-band { fill: var(--surface-hi); }
+.gd-band-2 { fill: color-mix(in srgb, var(--gc, var(--accent)) 45%, var(--surface-hi)); }
+.gd-band-3 { fill: color-mix(in srgb, var(--gc, var(--accent)) 70%, var(--surface-hi)); }
+.gd-band-hit { fill: var(--gc, var(--accent)); }
+.gd-band-out { fill: var(--surface-2); }
+
+.gd-chip { fill: var(--surface-2); stroke: var(--surface-hi); stroke-width: 1; }
+.gd-chip-ok { stroke: #2fd39b; }
+.gd-chip-mid { stroke: #e0af68; }
+.gd-chip-bad { stroke: #f7768e; }
+.gd-chip-t { fill: var(--text-2); font-size: 10px; }
+
+.gd-tab { fill: var(--surface-2); }
+.gd-tab-on { fill: color-mix(in srgb, var(--gc, var(--accent)) 18%, transparent); }
+
+/* the blinking caret in the shell diagram — the one piece of motion that
+   genuinely says "this is waiting for you" */
+.gd-caret {
+  fill: var(--gc, var(--accent));
+  animation: gdBlink 1.1s steps(1) infinite;
+}
+
+@keyframes gdBlink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* the branch line draws itself once on arrival */
+.gd-track-b {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: gdDraw 1.4s var(--ease-out) .2s forwards;
+}
+
+@keyframes gdDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Motion is a nicety; the content is the point. With reduced motion the
+   diagrams must still be complete and legible, so everything lands in its
+   final state rather than simply not animating. */
+@media (prefers-reduced-motion: reduce) {
+  .gd-caret { animation: none; opacity: 1; }
+  .gd-track-b { animation: none; stroke-dashoffset: 0; }
+  .gd-svg animateMotion { display: none; }
+  .gd-card, .gd-next-row a { transition: none; }
+}
+
+/* ---- small screens ---- */
+
+@media (max-width: 640px) {
+  .gd-step {
+    grid-template-columns: 28px 1fr;
+    gap: 11px;
+  }
+  .gd-step:not(:last-child)::before { left: 13px; }
+  .gd-step-n { width: 27px; height: 27px; }
+  .gd-tools { flex-direction: column; align-items: stretch; }
+  .gd-os { justify-content: center; }
+  .gd-copy { opacity: 1; }
+}
+
+/* ---- term links & interactive highlights ------------------------------ */
+
+.gd-wrap .tlink,
+.gd-step-b .tlink,
+.gd-why .tlink,
+.gd-note .tlink,
+.gd-out .tlink,
+.gd-fix .tlink,
+.gd-need .tlink {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1.5px solid var(--accent, #3ddc97);
+  padding-bottom: 1px;
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-out),
+              border-color var(--t-fast) var(--ease-out),
+              background var(--t-fast) var(--ease-out);
+}
+
+.gd-wrap .tlink:hover,
+.gd-step-b .tlink:hover,
+.gd-why .tlink:hover,
+.gd-note .tlink:hover,
+.gd-out .tlink:hover,
+.gd-fix .tlink:hover,
+.gd-need .tlink:hover {
+  color: var(--accent, #3ddc97);
+  border-bottom-color: var(--accent, #3ddc97);
+  background: color-mix(in srgb, var(--accent, #3ddc97) 14%, transparent);
+  border-radius: 2px;
+}
+
+/* ---- key terms ribbon at bottom of guide ---- */
+
+.gd-terms {
+  margin: 36px 0 0;
+  padding: 22px 24px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--surface-3);
+}
+
+.gd-terms h2 {
+  margin: 0 0 16px;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+
+.gd-terms-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.gd-term-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  text-decoration: none;
+  transition: transform var(--t-fast) var(--ease-out),
+              border-color var(--t-fast) var(--ease-out),
+              box-shadow var(--t-fast) var(--ease-out);
+}
+
+.gd-term-chip:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent, #3ddc97);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+}
+
+.gd-tc-t {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gd-tc-t::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent, #3ddc97);
+}
+
+.gd-tc-d {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

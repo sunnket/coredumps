@@ -1,0 +1,1610 @@
+/* ==========================================================================
+   landing.css — the front page, set as a reference book.
+
+   The rest of the site is a UI: cards, chips, sidebars. The front page is
+   deliberately not. It is set like the front matter of a printed reference
+   work — a serif display face, real hairline rules, a numbered contents
+   table, section marks in Roman numerals, and counts hanging in the margin.
+
+   The reason is a UX one rather than a taste one. A visitor arrives with one
+   of two intents: "I have a word I don't know" or "what is this, and is it
+   any good?". A page of feature cards answers neither. A contents page
+   answers the second in four seconds and puts the search box under the
+   first thing they read.
+
+   Motion rules, applied throughout:
+     - only transform and opacity move
+     - every entrance is a scroll reveal, once, then it stops costing
+     - the whole file degrades to "already there" under reduced motion
+   ========================================================================== */
+
+/* ---------- 1. Local tokens ---------- */
+
+.ed {
+  /* The editorial layer keeps its own scale. The rest of the site is set in
+     15px UI type; this page is set in reading type and needs its own rhythm. */
+  --ed-serif: "Newsreader", "Iowan Old Style", "Palatino Linotype", Palatino,
+    Georgia, "Times New Roman", serif;
+  --ed-ink: var(--text);
+  --ed-ink-2: var(--text-2);
+  --ed-ink-3: var(--text-3);
+  --ed-rule: color-mix(in srgb, var(--text) 14%, transparent);
+  --ed-rule-hair: color-mix(in srgb, var(--text) 8%, transparent);
+  --ed-paper: var(--surface);
+  --ed-accent: var(--accent);
+
+  /* the reveal curve — a long, quiet ease-out. Nothing on this page should
+     look like it bounced. */
+  --ed-ease: cubic-bezier(.16, 1, .3, 1);
+  --ed-in: 780ms;
+
+  max-width: 1080px;
+  width: 100%;
+  /* a grid child defaults to min-content width, so any one of the fixed
+     minmax() tracks below could otherwise push the whole page wider than the
+     viewport and take the shell with it */
+  min-width: 0;
+  margin: 0 auto;
+  color: var(--ed-ink);
+}
+
+/* nothing on this page is allowed to be the reason the body scrolls
+   sideways — the grids below all declare a comfortable minimum column and
+   need an explicit floor on small screens */
+.ed *,
+.ed *::before,
+.ed *::after {
+  min-width: 0;
+}
+
+/* ---------- 2. The reveal primitive ----------
+   Everything on this page enters the same way: eight pixels up, into
+   opacity, on a long ease. One motion for the whole document is what makes
+   nine sections read as one thing. */
+
+[data-rise] {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+  transition:
+    opacity var(--ed-in) var(--ed-ease) var(--rise-delay, 0ms),
+    transform var(--ed-in) var(--ed-ease) var(--rise-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+[data-rise].is-in {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  [data-rise],
+  [data-rise].is-in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ---------- 3. Masthead ---------- */
+
+.ed-mast {
+  padding: 8px 0 0;
+}
+
+
+
+.ed-mast-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, .82fr);
+  gap: 56px;
+  align-items: start;
+  /* the hero owns the first screen. No rule above it and real space around
+     it — the running head that used to sit here read as browser chrome and
+     cost the headline its top margin. */
+  padding-top: clamp(28px, 5vh, 60px);
+}
+
+.ed-mast-copy {
+  min-width: 0;
+}
+
+/* --- the title ---
+   Set light and small. A reference work states its scope; it does not shout
+   it. Newsreader at 300 with tight leading reads as authority, where the same
+   words at 4rem/600 read as a landing page for a startup. */
+
+.ed-title {
+  font-family: var(--ed-serif);
+  font-weight: 300;
+  font-size: clamp(2rem, 3.9vw, 3.1rem);
+  line-height: 1.14;
+  letter-spacing: -.019em;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--ed-ink);
+}
+
+/* the second line carries the claim, so it gets the optical weight */
+.ed-title-b {
+  font-weight: 400;
+}
+
+/* --- the ink wipe ---
+   Each line is revealed by a mask that sweeps left to right. The mask is a
+   gradient with a soft leading edge, so the words arrive like ink meeting
+   paper rather than switching on.
+
+   mask-position is the only thing that animates, which the compositor can
+   handle on its own — no layout, no paint of the text itself. */
+
+.ed-wipe {
+  display: block;
+  /* the mask is 300% wide: an opaque tail, a feathered edge, then nothing.
+     Sliding it from right to left uncovers the line. */
+  -webkit-mask-image: linear-gradient(90deg,
+      #000 0%, #000 33%, rgba(0, 0, 0, .55) 41%, transparent 50%, transparent 100%);
+  mask-image: linear-gradient(90deg,
+      #000 0%, #000 33%, rgba(0, 0, 0, .55) 41%, transparent 50%, transparent 100%);
+  -webkit-mask-size: 300% 100%;
+  mask-size: 300% 100%;
+  -webkit-mask-position: 100% 0;
+  mask-position: 100% 0;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* the reveal is driven by the page's own [data-rise] state, so the headline
+   waits for the same trigger as everything else rather than firing on load */
+.ed-mast [data-rise].is-in .ed-wipe,
+.ed-mast [data-rise].ed-title.is-in .ed-wipe {
+  animation: edWipe 1150ms var(--ed-ease) var(--wd, 0ms) both;
+}
+
+@keyframes edWipe {
+  from {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+  }
+
+  to {
+    -webkit-mask-position: 0% 0;
+    mask-position: 0% 0;
+  }
+}
+
+/* a hair of vertical travel under the wipe gives the ink some weight */
+.ed-wipe-in {
+  display: block;
+  animation: edWipeLift 1150ms var(--ed-ease) var(--wd, 0ms) both;
+}
+
+@keyframes edWipeLift {
+  from {
+    transform: translate3d(0, .1em, 0);
+    opacity: .55;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .ed-wipe {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .ed-mast [data-rise].is-in .ed-wipe,
+  .ed-wipe-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --- the drawn rule under "know" --- */
+
+.ed-know {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.ed-underline {
+  position: absolute;
+  /* the mark overshoots the word slightly on both sides, the way a pen does */
+  left: -4%;
+  bottom: -.03em;
+  width: 108%;
+  height: .26em;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* the stroke is scaled by preserveAspectRatio="none" along x only, so it has
+   to be held to a real width or the mark thins out as the word gets wider */
+.ed-underline path {
+  stroke: var(--ed-accent);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  fill: none;
+  /* no data-draw here: these are animated by their own keyframe rather than
+     motion.js, because non-scaling-stroke and dashoffset do not agree (see
+     the ladder) — a simple scale-in reads the same at this size */
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: edUnderline 720ms var(--ed-ease) var(--d, 1150ms) both;
+}
+
+.ed-ul-1 {
+  --d: 1050ms;
+}
+
+.ed-ul-2 {
+  --d: 1180ms;
+  stroke-width: 2;
+  opacity: .45;
+}
+
+@keyframes edUnderline {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ed-underline path {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .ed-ul-2 {
+    opacity: .45;
+  }
+}
+
+.ed-lede {
+  margin: 20px 0 0;
+  max-width: 52ch;
+  font-size: var(--fs-md);
+  line-height: 1.66;
+  color: var(--ed-ink-2);
+  text-wrap: pretty;
+}
+
+/* the counts inside the lede are the claim, so they get the ink back */
+.ed-lede b {
+  font-weight: 600;
+  color: var(--ed-ink);
+}
+
+/* --- the search field: the page's primary action --- */
+
+.ed-find {
+  position: relative;
+  z-index: 20;
+  margin-top: 30px;
+  max-width: 620px;
+}
+
+.ed-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 60px;
+  padding: 0 8px 0 18px;
+  background: var(--ed-paper);
+  border: 1px solid var(--border-2);
+  border-radius: 3px;
+  box-shadow: 0 1px 0 var(--ed-rule-hair);
+  transition:
+    border-color var(--t-mid) var(--ed-ease),
+    box-shadow var(--t-mid) var(--ed-ease);
+}
+
+.ed-search:focus-within {
+  border-color: color-mix(in srgb, var(--ed-accent) 55%, var(--border-3));
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--ed-accent) 12%, transparent),
+    var(--shadow-2);
+}
+
+.ed-search-ico {
+  display: flex;
+  color: var(--ed-ink-3);
+  flex: none;
+}
+
+.ed-search-ico svg {
+  width: 19px;
+  height: 19px;
+}
+
+.ed-search-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: none;
+  font-family: var(--font-body);
+  font-size: var(--fs-md);
+  color: var(--ed-ink);
+}
+
+.ed-search-input::placeholder {
+  color: var(--ed-ink-3);
+}
+
+.ed-search-input:focus {
+  outline: none;
+}
+
+.ed-search-kbd {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 7px;
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  color: var(--ed-ink-3);
+  background: var(--surface-2);
+}
+
+/* The submit button is the page inverted: ink ground, paper label. --text-inv
+   is the token that already means "readable on --text" in both themes, so it
+   stays legible when the palette flips rather than going dark-on-dark. */
+.ed-search-go {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--ed-ink);
+  color: var(--text-inv);
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: .01em;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ed-ease),
+    transform var(--t-fast) var(--ed-ease);
+}
+
+.ed-search-go:hover {
+  background: var(--ed-accent);
+  color: var(--text-inv);
+}
+
+.ed-search-go:active {
+  transform: scale(.98);
+}
+
+.ed-search-go svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* the suggestion panel reuses the existing .hero-sug rules for its rows and
+   only restates the frame, so there is one search experience on the site */
+.ed-sug {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: var(--ed-paper);
+  border: 1px solid var(--border-2);
+  border-radius: 3px;
+  box-shadow: var(--shadow-3);
+  overflow: hidden;
+  animation: edSug 200ms var(--ed-ease) both;
+}
+
+@keyframes edSug {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ed-sug {
+    animation: none;
+  }
+}
+
+.ed-mast-note {
+  margin: 18px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ed-ink-3);
+}
+
+.ed-mast-note a {
+  color: var(--ed-ink-2);
+  border-bottom: 1px solid var(--ed-rule);
+}
+
+.ed-mast-note a:hover {
+  color: var(--ed-accent);
+  border-color: currentColor;
+}
+
+/* --- a few real words, as one-tap entries ---
+   A first-time visitor staring at an empty search box has to invent a query
+   before the site can show them anything. These are five words people
+   actually arrive wanting, so the first click costs nothing. */
+
+.ed-tries {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 16px 0 0;
+}
+
+.ed-tries-k {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  color: var(--ed-ink-3);
+  margin-right: 2px;
+}
+
+.ed-try {
+  display: inline-flex;
+  align-items: center;
+  height: 29px;
+  padding: 0 11px;
+  border: 1px solid var(--ed-rule);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-sm);
+  color: var(--ed-ink-2);
+  background: var(--surface);
+  transition:
+    color var(--t-fast) var(--ed-ease),
+    border-color var(--t-fast) var(--ed-ease),
+    transform var(--t-fast) var(--ed-ease);
+}
+
+.ed-try:hover {
+  color: var(--ed-accent);
+  border-color: color-mix(in srgb, var(--ed-accent) 45%, var(--border));
+  transform: translateY(-1px);
+}
+
+/* --- the contents table --- */
+
+.ed-colophon {
+  position: relative;
+  padding: 22px 22px 18px;
+  border: 1px solid var(--ed-rule);
+  border-radius: 3px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.ed-colophon-k {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  color: var(--ed-ink-3);
+  padding-bottom: 12px;
+  margin: 0 0 12px;
+  border-bottom: 1px solid var(--ed-rule);
+}
+
+.ed-toc {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ed-toc-row a {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 9px 0;
+  color: var(--ed-ink-2);
+  border-bottom: 1px solid var(--ed-rule-hair);
+  transition: color var(--t-fast) var(--ed-ease);
+}
+
+.ed-toc-row:last-child a {
+  border-bottom: 0;
+}
+
+.ed-toc-row a:hover {
+  color: var(--ed-accent);
+}
+
+.ed-toc-n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ed-ink-3);
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.ed-toc-name {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  flex: none;
+}
+
+/* the leader dots that make a contents page a contents page */
+.ed-toc-dots {
+  flex: 1;
+  height: 1px;
+  min-width: 12px;
+  transform: translateY(-3px);
+  background-image: radial-gradient(circle, var(--ed-rule) 1px, transparent 1px);
+  background-size: 5px 1px;
+  background-repeat: repeat-x;
+}
+
+.ed-toc-c {
+  flex: none;
+  font-size: var(--fs-xs);
+  color: var(--ed-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.ed-toc-c b {
+  color: var(--ed-ink);
+  font-weight: 600;
+}
+
+.ed-colophon-foot {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--ed-rule);
+  font-size: var(--fs-xs);
+  color: var(--ed-ink-3);
+  line-height: 1.6;
+}
+
+/* ---------- 4. Section heads ---------- */
+
+.ed-sec {
+  margin-top: 92px;
+}
+
+.ed-head {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 18px;
+  padding-bottom: 22px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid var(--ed-rule);
+}
+
+/* the Roman numeral, hanging in the margin */
+.ed-head-n {
+  margin: 0;
+  font-family: var(--ed-serif);
+  font-size: var(--fs-xl);
+  font-style: italic;
+  color: var(--ed-ink-3);
+  line-height: 1.25;
+}
+
+.ed-head-b h2 {
+  margin: 0;
+  font-family: var(--ed-serif);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  line-height: 1.18;
+  letter-spacing: -.014em;
+}
+
+.ed-head-lede {
+  margin: 9px 0 0;
+  max-width: 62ch;
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  color: var(--ed-ink-2);
+  text-wrap: pretty;
+}
+
+.ed-head-go {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ed-ink-2);
+  white-space: nowrap;
+}
+
+.ed-head-go svg {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--t-mid) var(--ed-ease);
+}
+
+.ed-head-go:hover {
+  color: var(--ed-accent);
+}
+
+.ed-head-go:hover svg {
+  transform: translateX(3px);
+}
+
+/* ---------- 5. The anatomy figure ----------
+   A drawn diagram of a single entry. Every stroke is animated by
+   stroke-dashoffset, which is the only way to make a line look drawn
+   rather than faded in. */
+
+.ed-anat {
+  margin: 0;
+}
+
+.ed-anat-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 340px;
+  overflow: visible;
+}
+
+/* the strokes. --len is written by motion.js from the measured path length,
+   so the transition duration can scale with how far the pen has to travel. */
+.ed-anat-svg [data-draw] {
+  transition: stroke-dashoffset 1100ms var(--ed-ease);
+}
+
+.ed-anat-page {
+  fill: var(--surface);
+  stroke: var(--ed-rule);
+  stroke-width: 1;
+}
+
+.ed-anat-ink {
+  stroke: color-mix(in srgb, var(--text) 22%, transparent);
+  stroke-width: 6;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.ed-anat-ink-hd {
+  stroke: var(--ed-ink);
+  stroke-width: 9;
+}
+
+.ed-anat-lead {
+  stroke: color-mix(in srgb, var(--ed-accent) 55%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  fill: none;
+}
+
+/* the labels fade in behind their leader line, never before it */
+/* transform-box is required or the translate in the keyframe is resolved
+   against the whole SVG viewport rather than the text's own box, which sends
+   the label off the canvas instead of nudging it six pixels */
+.ed-anat-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  fill: var(--ed-ink-2);
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: edLabel 600ms var(--ed-ease) var(--d, 0ms) forwards;
+}
+
+@keyframes edLabel {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .ed-anat-svg [data-draw] {
+    transition: none;
+  }
+
+  .ed-anat-label {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+.ed-anat-cap {
+  margin: 18px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--ed-rule-hair);
+  max-width: 76ch;
+  font-size: var(--fs-sm);
+  line-height: 1.65;
+  color: var(--ed-ink-3);
+}
+
+/* ---------- 6. The ladder ----------
+   The curve is SVG so it can be drawn on by a pen. The dots and the labels
+   are HTML in the same grid, so the dots stay round and the labels stay in
+   the type system while the curve stretches to any width. */
+
+.ed-ladder {
+  position: relative;
+}
+
+.ed-lad-track {
+  position: relative;
+  height: 92px;
+}
+
+.ed-lad-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* NOTE: no vector-effect here, deliberately. non-scaling-stroke makes the
+   browser resolve stroke-dasharray in screen pixels while getTotalLength()
+   reports viewBox units, so the dash comes out far shorter than the path and
+   the line stops drawing partway along. The viewBox is only stretched
+   horizontally and the stroke is hairline, so the width variation it avoids
+   is not visible anyway. */
+.ed-lad-line {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ed-accent) 45%, transparent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 2000ms var(--ed-ease);
+}
+
+/* one column per stage, matching the viewBox exactly */
+.ed-lad-nodes {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--lad-n, 10), minmax(0, 1fr));
+  pointer-events: none;
+}
+
+.ed-lad-dot {
+  position: relative;
+  top: var(--nt, 50%);
+  justify-self: center;
+  width: 9px;
+  height: 9px;
+  margin-top: -4.5px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1.75px solid var(--ed-accent);
+  opacity: 0;
+  animation: edNode 460ms var(--ed-ease) var(--d, 0ms) forwards;
+}
+
+@keyframes edNode {
+  from {
+    opacity: 0;
+    transform: scale(.2);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ed-lad-stops {
+  display: grid;
+  grid-template-columns: repeat(var(--lad-n, 10), minmax(0, 1fr));
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.ed-lad-stop {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 11px 8px 4px;
+  border-top: 1px solid var(--ed-rule-hair);
+  color: var(--ed-ink-2);
+  opacity: 0;
+  animation: edStop 560ms var(--ed-ease) var(--d, 0ms) forwards;
+  transition: color var(--t-fast) var(--ed-ease),
+    border-color var(--t-fast) var(--ed-ease);
+}
+
+.ed-lad-stop:hover {
+  color: var(--ed-accent);
+  border-top-color: var(--ed-accent);
+}
+
+@keyframes edStop {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .ed-lad-line {
+    transition: none;
+  }
+
+  .ed-lad-dot,
+  .ed-lad-stop {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+.ed-lad-n {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ed-ink-3);
+  letter-spacing: .08em;
+}
+
+.ed-lad-t {
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+  font-weight: 500;
+  text-wrap: pretty;
+}
+
+.ed-lad-note {
+  margin: 22px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--ed-rule-hair);
+  font-size: var(--fs-sm);
+  color: var(--ed-ink-3);
+}
+
+/* ---------- 7. Tracks, as a syllabus ---------- */
+
+.ed-tracks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--ed-rule-hair);
+}
+
+.ed-track {
+  position: relative;
+  border-bottom: 1px solid var(--ed-rule-hair);
+}
+
+.ed-track a {
+  display: grid;
+  grid-template-columns: 34px 26px minmax(0, 1fr) auto 18px;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 10px 15px 4px;
+  color: var(--ed-ink);
+  transition: background var(--t-fast) var(--ed-ease),
+    padding-left var(--t-mid) var(--ed-ease);
+}
+
+.ed-track a:hover {
+  background: color-mix(in srgb, var(--tc, var(--ed-accent)) 5%, transparent);
+  padding-left: 12px;
+}
+
+.ed-track-n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ed-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.ed-track-ico {
+  display: flex;
+  color: var(--tc, var(--ed-accent));
+}
+
+.ed-track-ico svg {
+  width: 17px;
+  height: 17px;
+}
+
+.ed-track-b {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ed-track-t {
+  font-family: var(--ed-serif);
+  font-size: var(--fs-lg);
+  line-height: 1.25;
+}
+
+.ed-track-d {
+  font-size: var(--fs-sm);
+  color: var(--ed-ink-3);
+  line-height: 1.45;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.ed-track-m {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.ed-track-c,
+.ed-track-p {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ed-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.ed-track-p {
+  color: var(--tc, var(--ed-accent));
+}
+
+.ed-track-go {
+  display: flex;
+  color: var(--ed-ink-3);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity var(--t-mid) var(--ed-ease),
+    transform var(--t-mid) var(--ed-ease);
+}
+
+.ed-track-go svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ed-track a:hover .ed-track-go {
+  opacity: 1;
+  transform: none;
+  color: var(--tc, var(--ed-accent));
+}
+
+.ed-track-bar {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 100%;
+  height: 1px;
+  background: transparent;
+}
+
+.ed-track-bar i {
+  display: block;
+  height: 100%;
+  background: var(--tc, var(--ed-accent));
+}
+
+.ed-more {
+  margin: 20px 0 0;
+}
+
+.ed-more a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ed-ink-2);
+}
+
+.ed-more a svg {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--t-mid) var(--ed-ease);
+}
+
+.ed-more a:hover {
+  color: var(--ed-accent);
+}
+
+.ed-more a:hover svg {
+  transform: translateX(3px);
+}
+
+/* ---------- 8. Practice ---------- */
+
+.ed-prac {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(292px, 100%), 1fr));
+  gap: 1px;
+  background: var(--ed-rule-hair);
+  border: 1px solid var(--ed-rule-hair);
+}
+
+/* the cards share hairlines rather than each carrying a border, which is
+   what makes the block read as a ruled table rather than as a card grid */
+/* No cursor glow anywhere on this page. Hover moves the surface one step up
+   the palette instead — it says "this is a target" without painting light
+   onto a flat ground, which on charcoal only ever reads as a smudge. */
+.ed-prac-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 22px 20px 24px;
+  background: var(--surface);
+  color: var(--ed-ink);
+  overflow: hidden;
+  transition: background var(--t-mid) var(--ed-ease);
+}
+
+.ed-prac-card:hover {
+  background: var(--surface-2);
+}
+
+.ed-prac-ico {
+  display: flex;
+  color: var(--ed-ink-3);
+  margin-bottom: 10px;
+  transition: color var(--t-mid) var(--ed-ease),
+    transform var(--t-mid) var(--ed-ease);
+}
+
+.ed-prac-ico svg {
+  width: 20px;
+  height: 20px;
+}
+
+.ed-prac-card:hover .ed-prac-ico {
+  color: var(--ed-accent);
+  transform: translateY(-2px);
+}
+
+.ed-prac-n {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.ed-prac-n b {
+  font-family: var(--ed-serif);
+  font-size: 2.15rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ed-prac-n span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ed-ink-3);
+}
+
+.ed-prac-t {
+  margin-top: 8px;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.ed-prac-d {
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--ed-ink-3);
+  text-wrap: pretty;
+}
+
+/* ---------- 9. The fields index ---------- */
+
+.ed-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  column-gap: 40px;
+}
+
+.ed-field {
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--ed-rule-hair);
+  color: var(--ed-ink-2);
+  transition: color var(--t-fast) var(--ed-ease);
+}
+
+.ed-field:hover {
+  color: var(--ed-accent);
+}
+
+.ed-field-ico {
+  display: flex;
+  flex: none;
+  color: var(--ed-ink-3);
+  transform: translateY(2px);
+  transition: color var(--t-fast) var(--ed-ease);
+}
+
+.ed-field-ico svg {
+  width: 15px;
+  height: 15px;
+}
+
+.ed-field:hover .ed-field-ico {
+  color: var(--ed-accent);
+}
+
+.ed-field-t {
+  font-size: var(--fs-base);
+  flex: none;
+}
+
+.ed-field-dots {
+  flex: 1;
+  min-width: 10px;
+  height: 1px;
+  transform: translateY(-4px);
+  background-image: radial-gradient(circle, var(--ed-rule) 1px, transparent 1px);
+  background-size: 5px 1px;
+  background-repeat: repeat-x;
+}
+
+.ed-field-c {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ed-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 10. Case studies ---------- */
+
+.ed-studies {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(248px, 100%), 1fr));
+  gap: 1px;
+  background: var(--ed-rule-hair);
+  border: 1px solid var(--ed-rule-hair);
+}
+
+.ed-study {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 24px 20px 22px;
+  background: var(--surface);
+  color: var(--ed-ink);
+  overflow: hidden;
+  transition: background var(--t-mid) var(--ed-ease);
+}
+
+.ed-study:hover {
+  background: var(--surface-2);
+}
+
+.ed-study-y {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ed-ink-3);
+  letter-spacing: .06em;
+}
+
+.ed-study-c {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ed-accent);
+}
+
+.ed-study-t {
+  font-family: var(--ed-serif);
+  font-size: var(--fs-xl);
+  line-height: 1.2;
+  margin-top: 3px;
+}
+
+.ed-study-d {
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--ed-ink-3);
+  flex: 1;
+  text-wrap: pretty;
+}
+
+.ed-study-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ed-ink-2);
+}
+
+.ed-study-go svg {
+  width: 13px;
+  height: 13px;
+  transition: transform var(--t-mid) var(--ed-ease);
+}
+
+.ed-study:hover .ed-study-go {
+  color: var(--ed-accent);
+}
+
+.ed-study:hover .ed-study-go svg {
+  transform: translateX(3px);
+}
+
+/* ---------- 11. Plans ---------- */
+
+.ed-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(232px, 100%), 1fr));
+  gap: 14px;
+}
+
+.ed-plan {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 22px 20px;
+  border: 1px solid var(--ed-rule);
+  border-top: 2px solid var(--jc, var(--ed-accent));
+  border-radius: 2px;
+  background: var(--surface);
+  color: var(--ed-ink);
+  overflow: hidden;
+  transition: transform var(--t-mid) var(--ed-ease),
+    box-shadow var(--t-mid) var(--ed-ease);
+}
+
+.ed-plan:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-2);
+}
+
+.ed-plan-ico {
+  display: flex;
+  color: var(--jc, var(--ed-accent));
+  margin-bottom: 6px;
+}
+
+.ed-plan-ico svg {
+  width: 21px;
+  height: 21px;
+}
+
+.ed-plan-t {
+  font-family: var(--ed-serif);
+  font-size: var(--fs-xl);
+  line-height: 1.2;
+}
+
+.ed-plan-d {
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--ed-ink-3);
+  flex: 1;
+  text-wrap: pretty;
+}
+
+.ed-plan-m {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ed-rule-hair);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ed-ink-3);
+}
+
+/* ---------- 12. Resume band ---------- */
+
+.ed-resume {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  /* deliberately below the fold. This is a returning-reader control, and in
+     the first viewport it competed with the search field, which is what a
+     first-time visitor is actually there for. */
+  margin-top: clamp(56px, 11vh, 104px);
+  padding: 20px 22px;
+  border: 1px solid var(--ed-rule);
+  border-left: 3px solid var(--jc, var(--ed-accent));
+  border-radius: 2px;
+  background: var(--surface);
+  color: var(--ed-ink);
+}
+
+.ed-resume-ico {
+  display: flex;
+  color: var(--jc, var(--ed-accent));
+}
+
+.ed-resume-ico svg {
+  width: 24px;
+  height: 24px;
+}
+
+.ed-resume-b {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ed-resume-k {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ed-ink-3);
+}
+
+.ed-resume-h {
+  font-family: var(--ed-serif);
+  font-size: var(--fs-lg);
+  line-height: 1.25;
+}
+
+.ed-resume-d {
+  font-size: var(--fs-sm);
+  color: var(--ed-ink-3);
+  line-height: 1.5;
+}
+
+.ed-resume-bar {
+  display: block;
+  height: 2px;
+  margin-top: 9px;
+  background: var(--ed-rule);
+  overflow: hidden;
+}
+
+.ed-resume-bar i {
+  display: block;
+  height: 100%;
+  background: var(--jc, var(--ed-accent));
+  transition: width 900ms var(--ed-ease);
+}
+
+.ed-resume-a {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ed-resume-go {
+  display: flex;
+  color: var(--ed-ink-3);
+  transition: transform var(--t-mid) var(--ed-ease);
+}
+
+.ed-resume-go svg {
+  width: 20px;
+  height: 20px;
+}
+
+.ed-resume-new:hover .ed-resume-go {
+  transform: translateX(4px);
+  color: var(--ed-accent);
+}
+
+.ed-resume-new:hover {
+  border-color: color-mix(in srgb, var(--ed-accent) 40%, var(--border));
+}
+
+/* ---------- 13. The closing colophon ---------- */
+
+.ed-end {
+  margin-top: 104px;
+}
+
+.ed-end-rule {
+  height: 1px;
+  background: var(--ed-rule);
+  margin-bottom: 44px;
+}
+
+.ed-end-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, .85fr);
+  gap: 56px;
+  align-items: start;
+}
+
+.ed-end-copy h2 {
+  margin: 0;
+  font-family: var(--ed-serif);
+  font-weight: 400;
+  font-size: clamp(1.55rem, 3vw, 2.3rem);
+  line-height: 1.18;
+  letter-spacing: -.015em;
+  max-width: 20ch;
+  text-wrap: balance;
+}
+
+.ed-end-copy p {
+  margin: 18px 0 0;
+  max-width: 52ch;
+  font-size: var(--fs-base);
+  line-height: 1.68;
+  color: var(--ed-ink-2);
+  text-wrap: pretty;
+}
+
+.ed-end-cta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+}
+
+.ed-end-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  background: var(--ed-rule-hair);
+  border: 1px solid var(--ed-rule-hair);
+}
+
+.ed-end-fact {
+  padding: 18px 16px;
+  background: var(--surface);
+}
+
+.ed-end-fact dt {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ed-ink-3);
+}
+
+.ed-end-fact dd {
+  margin: 5px 0 0;
+  font-family: var(--ed-serif);
+  font-size: 1.85rem;
+  line-height: 1;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 14. Responsive ---------- */
+
+@media (max-width: 1080px) {
+  .ed-mast-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .ed-end-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+@media (max-width: 860px) {
+  .ed-sec {
+    margin-top: 68px;
+  }
+
+  .ed-head {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .ed-head-go {
+    grid-column: 2;
+    justify-self: start;
+    margin-top: 4px;
+  }
+
+  .ed-track a {
+    grid-template-columns: 26px 22px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .ed-track-go {
+    display: none;
+  }
+
+  /* below this width ten columns of two-word labels is unreadable, so the
+     wave is dropped and the stages become a plain wrapped list */
+  .ed-lad-track {
+    display: none;
+  }
+
+  .ed-lad-stops {
+    grid-template-columns: repeat(auto-fit, minmax(min(136px, 100%), 1fr));
+  }
+
+  .ed-resume {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+
+  .ed-resume-a,
+  .ed-resume-go {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 620px) {
+  .ed-title {
+    font-size: clamp(2rem, 9vw, 2.6rem);
+  }
+
+  .ed-lede {
+    font-size: var(--fs-md);
+  }
+
+  .ed-search {
+    height: 54px;
+    padding-left: 14px;
+  }
+
+  .ed-search-kbd {
+    display: none;
+  }
+
+  .ed-search-go span {
+    display: none;
+  }
+
+  .ed-search-go {
+    padding: 0 14px;
+  }
+
+  .ed-track-d {
+    display: none;
+  }
+
+  .ed-end-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .ed-anat-svg {
+    max-height: 260px;
+  }
+}

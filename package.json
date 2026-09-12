@@ -1,0 +1,9 @@
+{
+  "name": "coredumps-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node termdex/server.js",
+    "dev": "node termdex/server.js 8000"
+  }
+}

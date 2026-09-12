@@ -1,0 +1,559 @@
+<title>CoreDumps Gap Audit</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  :root {
+    --ink: #14171c;
+    --ink-2: #3f454f;
+    --ink-3: #6d737e;
+    --paper: #faf9f7;
+    --surface: #ffffff;
+    --warm: #efece7;
+    --line: #ded9d1;
+    --line-2: #c9c3b8;
+    --gap: #b4453a;
+    --gap-soft: #f6e9e7;
+    --have: #3d6b52;
+    --have-soft: #e6efe9;
+    --idea: #8a6a1f;
+    --idea-soft: #f7efdc;
+
+    --display: "Newsreader", Georgia, "Times New Roman", serif;
+    --body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #ece9e4;
+      --ink-2: #b3aea6;
+      --ink-3: #8a857d;
+      --paper: #16181b;
+      --surface: #1d2024;
+      --warm: #24272c;
+      --line: #32363c;
+      --line-2: #444951;
+      --gap: #e0796c;
+      --gap-soft: #2e2220;
+      --have: #7fb797;
+      --have-soft: #1e2823;
+      --idea: #d4ac5e;
+      --idea-soft: #2b2519;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ink: #ece9e4;
+    --ink-2: #b3aea6;
+    --ink-3: #8a857d;
+    --paper: #16181b;
+    --surface: #1d2024;
+    --warm: #24272c;
+    --line: #32363c;
+    --line-2: #444951;
+    --gap: #e0796c;
+    --gap-soft: #2e2220;
+    --have: #7fb797;
+    --have-soft: #1e2823;
+    --idea: #d4ac5e;
+    --idea-soft: #2b2519;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 32px 96px;
+  }
+
+  /* ---- masthead ---- */
+
+  .mast {
+    padding: 64px 0 28px;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .kicker {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--gap);
+    margin: 0 0 18px;
+  }
+
+  .mast h1 {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: clamp(38px, 6vw, 62px);
+    line-height: 1.04;
+    letter-spacing: -.02em;
+    margin: 0 0 18px;
+    text-wrap: balance;
+    max-width: 17ch;
+  }
+
+  .standfirst {
+    font-family: var(--display);
+    font-size: clamp(17px, 2.2vw, 21px);
+    line-height: 1.5;
+    color: var(--ink-2);
+    margin: 0;
+    max-width: 60ch;
+  }
+
+  .standfirst em { font-style: italic; color: var(--ink); }
+
+  /* ---- inventory strip ---- */
+
+  .inventory {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+    gap: 0;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 56px;
+  }
+
+  .inv {
+    padding: 20px 16px 22px;
+    border-right: 1px solid var(--line);
+  }
+
+  .inv:last-child { border-right: 0; }
+
+  .inv b {
+    display: block;
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    line-height: 1;
+  }
+
+  .inv span {
+    display: block;
+    margin-top: 7px;
+    font-size: 11px;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  /* ---- section headings ---- */
+
+  .sec-h {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 0 0 8px;
+    padding-top: 8px;
+  }
+
+  .sec-h h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 30px;
+    letter-spacing: -.015em;
+    margin: 0;
+  }
+
+  .sec-n {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: var(--ink-3);
+  }
+
+  .sec-lead {
+    margin: 0 0 30px;
+    max-width: 66ch;
+    color: var(--ink-2);
+  }
+
+  /* ---- the ledger: metadata rail + content ---- */
+
+  .item {
+    display: grid;
+    grid-template-columns: 168px minmax(0, 1fr);
+    gap: 30px;
+    padding: 26px 0 28px;
+    border-top: 1px solid var(--line);
+  }
+
+  .item:last-of-type { border-bottom: 1px solid var(--line); }
+
+  .rail { display: flex; flex-direction: column; gap: 10px; }
+
+  .chip {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+  }
+
+  .chip.gap { background: var(--gap-soft); color: var(--gap); }
+  .chip.have { background: var(--have-soft); color: var(--have); }
+  .chip.idea { background: var(--idea-soft); color: var(--idea); }
+
+  .meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.75;
+    color: var(--ink-3);
+  }
+
+  .meta b {
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+
+  .body-col { border-left: 3px solid var(--line-2); padding-left: 22px; }
+  .body-col.is-gap { border-left-color: var(--gap); }
+  .body-col.is-idea { border-left-color: var(--idea); }
+
+  .item h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 21px;
+    letter-spacing: -.01em;
+    margin: 0 0 9px;
+    line-height: 1.25;
+  }
+
+  .item p { margin: 0 0 11px; max-width: 64ch; color: var(--ink-2); }
+  .item p:last-child { margin-bottom: 0; }
+  .item strong { color: var(--ink); font-weight: 600; }
+
+  .evidence {
+    margin-top: 12px;
+    padding: 11px 14px;
+    background: var(--warm);
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--ink-2);
+    overflow-x: auto;
+  }
+
+  .evidence b { color: var(--ink); font-weight: 700; }
+
+  /* ---- the ladder ---- */
+
+  .ladder {
+    display: grid;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    overflow: hidden;
+    margin: 22px 0 4px;
+  }
+
+  .rung {
+    display: grid;
+    grid-template-columns: 34px 132px minmax(0, 1fr);
+    gap: 16px;
+    align-items: baseline;
+    padding: 13px 16px;
+    background: var(--surface);
+  }
+
+  .rung-n {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gap);
+  }
+
+  .rung-k {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .rung-d { font-size: 13.5px; color: var(--ink-2); }
+
+  /* ---- priority table ---- */
+
+  .table-scroll { overflow-x: auto; margin-top: 4px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    min-width: 640px;
+  }
+
+  th {
+    text-align: left;
+    padding: 0 14px 10px 0;
+    border-bottom: 1.5px solid var(--ink);
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  td {
+    padding: 13px 14px 13px 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-2);
+    vertical-align: top;
+  }
+
+  td:first-child { color: var(--ink); font-weight: 500; }
+
+  .rank {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--gap);
+    width: 30px;
+  }
+
+  .effort {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    white-space: nowrap;
+    color: var(--ink-3);
+  }
+
+  /* ---- closing note ---- */
+
+  .close {
+    margin-top: 56px;
+    padding: 26px 30px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+  }
+
+  .close p {
+    font-family: var(--display);
+    font-size: 17px;
+    line-height: 1.6;
+    margin: 0;
+    color: var(--ink-2);
+    max-width: 68ch;
+  }
+
+  .close p + p { margin-top: 12px; }
+  .close strong { color: var(--ink); font-weight: 600; }
+
+  hr.rule {
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin: 58px 0 0;
+  }
+
+  @media (max-width: 720px) {
+    .wrap { padding: 0 20px 64px; }
+    .item { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .rail { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .body-col { padding-left: 16px; }
+    .rung { grid-template-columns: 26px minmax(0, 1fr); }
+    .rung-d { grid-column: 1 / -1; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="kicker">Content audit · zero-to-hired path</p>
+    <h1>What's missing between a beginner and an offer</h1>
+    <p class="standfirst">CoreDumps is not short on material. The gaps are structural — <em>specific breaks in the path</em> a person walks from knowing nothing to being company-ready.</p>
+  </header>
+
+  <section class="inventory" aria-label="Current inventory">
+    <div class="inv"><b>382</b><span>Lessons</span></div>
+    <div class="inv"><b>1240</b><span>Terms</span></div>
+    <div class="inv"><b>117</b><span>Katas</span></div>
+    <div class="inv"><b>91</b><span>Logic cards</span></div>
+    <div class="inv"><b>60</b><span>Projects</span></div>
+    <div class="inv"><b>189</b><span>Interview Qs</span></div>
+    <div class="inv"><b>1373</b><span>Drill cards</span></div>
+  </section>
+
+  <section>
+    <div class="sec-h">
+      <span class="sec-n">01</span>
+      <h2>Your speed-drill idea</h2>
+    </div>
+    <p class="sec-lead">The instinct is right, and the infrastructure is already 90&nbsp;% built. Here is what the engine does and does not do today.</p>
+
+    <div class="item">
+      <div class="rail">
+        <span class="chip idea">Build this</span>
+        <p class="meta"><b>Effort</b><br>Small — extends<br>existing engine<br><br><b>Unlocks</b><br>1,373 cards</p>
+      </div>
+      <div class="body-col is-idea">
+        <h3>The drill measures correctness. It never measures time.</h3>
+        <p>Every drill record stores which Leitner box a line is in, how many times it was right, and when it is next due. There is <strong>no timing anywhere</strong> — so the app can tell someone “you can type this correctly” but never “you can type this fluently.”</p>
+        <p>Those are different skills, and the second is what makes a person look competent in a live coding round. Adding elapsed time and a personal best per card converts the existing bank into a fluency trainer without writing a single new card.</p>
+        <div class="evidence">record() stores → <b>box, ok, miss, seen, due</b><br>never stores  → <b>duration, wpm, best</b></div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="rail">
+        <span class="chip idea">Design</span>
+        <p class="meta"><b>Your idea,<br>as a ladder</b><br><br>Each rung is a<br>real skill, not<br>a difficulty knob</p>
+      </div>
+      <div class="body-col is-idea">
+        <h3>Fragment → line → block → from memory, against the clock</h3>
+        <p>The escalation you described maps onto four genuine stages. The jump that matters is rung 3 to 4: producing a block <em>without</em> the target on screen is the skill an interview actually tests.</p>
+        <div class="ladder">
+          <div class="rung"><span class="rung-n">01</span><span class="rung-k">fragment</span><span class="rung-d">Type <code>if</code>, <code>def</code>, <code>for x in</code> — repeated until the shape is automatic</span></div>
+          <div class="rung"><span class="rung-n">02</span><span class="rung-k">line</span><span class="rung-d">One full statement, visible, timed. Beat your own previous time</span></div>
+          <div class="rung"><span class="rung-n">03</span><span class="rung-k">block</span><span class="rung-d">Three to six lines with correct indentation, still visible</span></div>
+          <div class="rung"><span class="rung-n">04</span><span class="rung-k">from memory</span><span class="rung-d">Target hidden. Only the intent is shown. This is the one that counts</span></div>
+        </div>
+        <p style="margin-top:14px">Rung 4 already exists — the drill's <em>recall</em> phase does exactly this. It just is not timed, and there is no ladder connecting the rungs.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <div class="sec-h">
+      <span class="sec-n">02</span>
+      <h2>Breaks in the path</h2>
+    </div>
+    <p class="sec-lead">Verified against the live app, not assumed. Each of these stops a beginner mid-route.</p>
+
+    <div class="item">
+      <div class="rail">
+        <span class="chip gap">Biggest hole</span>
+        <p class="meta"><b>Blocks</b><br>the “web” stage<br><br><b>Effort</b><br>Large</p>
+      </div>
+      <div class="body-col is-gap">
+        <h3>There is no JavaScript track</h3>
+        <p>HTML has 7 lessons, CSS has 9, and the guided route has a whole <strong>web</strong> stage. But there is no JS — so a learner can style a page and cannot make it do anything. The stage dead-ends.</p>
+        <p>This hurts the AI path too. Every AI product has a frontend, and most AI-engineer postings list JavaScript or TypeScript. It is also the natural home for a React track later.</p>
+        <div class="evidence">tracks present → zero basics python git sql <b>html css</b> math ml dl llm<br>finetune backend docker cloud dsa hunt mlops nlp systemdesign…<br>javascript → <b>absent</b>   ·   typescript → <b>absent</b>   ·   react → <b>absent</b></div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="rail">
+        <span class="chip gap">Structural</span>
+        <p class="meta"><b>Affects</b><br>all 382 lessons<br><br><b>Effort</b><br>Medium</p>
+      </div>
+      <div class="body-col is-gap">
+        <h3>Nothing in a lesson actually runs</h3>
+        <p>The 117 katas are checked by comparing typed characters against a reference solution — nothing is executed in the browser. Lessons have no runnable cell at all.</p>
+        <p>So a complete beginner reads Python prose for hours before running a single line. The read-to-do gap is where most self-taught learners quit. An in-browser Python runtime on lesson code blocks would close it.</p>
+        <div class="evidence">grep for a runtime across assets/js → <b>0 matches</b><br>dojo.js eval/Function calls → <b>0</b> (character comparison only)</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="rail">
+        <span class="chip gap">Visible hole</span>
+        <p class="meta"><b>Track</b><br>systemdesign<br><br><b>Effort</b><br>Small</p>
+      </div>
+      <div class="body-col is-gap">
+        <h3>An empty module ships in the syllabus</h3>
+        <p>The <strong>Consistency, Consensus &amp; Transactions</strong> module is declared with a full description — CAP, PACELC, 2PC vs Saga, Raft — and has <strong>zero lessons behind it</strong>. A learner clicks it and finds nothing.</p>
+        <p>Small fix, outsized effect: an empty chapter in a paid-feeling product reads as abandonment.</p>
+        <div class="evidence">systemdesign · 18 lessons · 6 modules · <b>EMPTY: consistency</b></div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="rail">
+        <span class="chip gap">Uneven</span>
+        <p class="meta"><b>Effort</b><br>Small<br><br><b>Coverage</b><br>87 % overall</p>
+      </div>
+      <div class="body-col is-gap">
+        <h3>The tracks that need recall most have the least</h3>
+        <p>Drill coverage is strong overall, but distributed backwards. <strong>hunt</strong> — the job-hunting track — has none at all, and it is the track whose content you have to <em>say out loud</em> under pressure. <strong>basics</strong> is the other outlier, and it is where beginners live.</p>
+        <div class="evidence">hunt   <b>0/6</b>   ·   basics <b>10/35</b>   ·   zero <b>10/14</b>   ·   conduct <b>7/16</b><br>python <b>58/59</b>  ·   ml <b>17/18</b>  ·  git <b>12/13</b></div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="rail">
+        <span class="chip gap">Missing spine</span>
+        <p class="meta"><b>Have</b><br>60 projects<br><br><b>Missing</b><br>the ordering</p>
+      </div>
+      <div class="body-col is-gap">
+        <h3>Projects are a library, not a portfolio path</h3>
+        <p>The projects are genuinely excellent — real problems, real stacks, real pitfalls. But nothing says <em>“finish these three, in this order, and you have a portfolio that gets interviews.”</em></p>
+        <p>A beginner facing 60 options picks badly or picks nothing. Three named capstones per track, sequenced and gated, converts a library into an outcome.</p>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="rail">
+        <span class="chip gap">Missing mode</span>
+        <p class="meta"><b>Have</b><br>189 questions<br><br><b>Missing</b><br>the pressure</p>
+      </div>
+      <div class="body-col is-gap">
+        <h3>No timed mock interview</h3>
+        <p>The interview bank is a browsable reference with self-assessment. There is no <strong>round</strong>: 45 minutes, three questions, no peeking, a verdict at the end.</p>
+        <p>Reading answers builds recognition. Performing under a clock builds the thing being hired for — and it is the single cheapest way to make someone feel company-ready, because it tells them honestly whether they are.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <div class="sec-h">
+      <span class="sec-n">03</span>
+      <h2>What I'd build, in order</h2>
+    </div>
+    <p class="sec-lead">Ranked by learner impact per unit of work — not by how interesting each is to build.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th class="rank">#</th><th>Build</th><th>Why it ranks here</th><th>Effort</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="rank">1</td><td>Speed layer on the drill</td><td>Reuses 1,373 existing cards. Turns correctness practice into fluency practice for almost no content work.</td><td class="effort">S</td></tr>
+          <tr><td class="rank">2</td><td>Fill the consistency module</td><td>An empty chapter is visible damage. Cheapest credibility fix available.</td><td class="effort">S</td></tr>
+          <tr><td class="rank">3</td><td>Drills for hunt + basics</td><td>Closes the coverage gap exactly where recall matters most.</td><td class="effort">S</td></tr>
+          <tr><td class="rank">4</td><td>Timed mock-interview mode</td><td>Bank already exists. Adds the pressure that converts knowledge into performance.</td><td class="effort">M</td></tr>
+          <tr><td class="rank">5</td><td>Capstone paths over projects</td><td>Three sequenced projects per track. Turns 60 options into one portfolio.</td><td class="effort">M</td></tr>
+          <tr><td class="rank">6</td><td>Runnable code in lessons</td><td>Closes the read-to-do gap for absolute beginners. Highest value, highest cost.</td><td class="effort">L</td></tr>
+          <tr><td class="rank">7</td><td>JavaScript track</td><td>Completes the web stage and the AI-product story. Big, but it is the last real hole in the map.</td><td class="effort">L</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="close">
+    <p><strong>The honest summary:</strong> you do not have a content problem. 382 lessons and 1,240 terms is more than most paid platforms ship, and the writing quality is consistently high.</p>
+    <p>What you have is a <strong>practice-and-proof problem</strong>. The path teaches well and then stops short of making someone <em>perform</em> — no clock, no runnable code, no sequenced portfolio, no mock round. Items 1, 3, 4 and 5 above are all about that one gap, and together they are less work than the JavaScript track alone.</p>
+  </div>
+
+</div>
