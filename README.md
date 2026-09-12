@@ -33,6 +33,7 @@ coredumps/
 │   └── README.md             # Code Dojo pipeline documentation
 ├── check_syntax.js           # Syntax and integrity validator for all data files
 ├── package.json              # Workspace root scripts
+├── vercel.json               # Vercel deployment routing and rewrites
 └── README.md
 ```
 

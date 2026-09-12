@@ -22,3 +22,6 @@ while ((match = scriptRegex.exec(html)) !== null) {
 }
 
 console.log(`Checked ${checked} scripts. Total syntax errors: ${errors}`);
+if (errors > 0) {
+  process.exit(1);
+}

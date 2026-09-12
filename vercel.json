@@ -1,0 +1,26 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/termdex/index.html"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/termdex/public/logo.png"
+    },
+    {
+      "source": "/dojo/:path*",
+      "destination": "/dojo/:path*"
+    },
+    {
+      "source": "/termdex/:path*",
+      "destination": "/termdex/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/termdex/:path*"
+    }
+  ]
+}
